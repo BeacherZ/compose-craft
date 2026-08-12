@@ -20,7 +20,7 @@
 /root/data/          ← 有些项目装这里
 /home/user/docker/   ← 有些装这里
 /var/lib/myapp/      ← 有些装这里
-/tmp/test/← 还有些随手放的
+/tmp/test/           ← 还有些随手放的
 ```
 
 ### 解决方案
@@ -28,7 +28,7 @@
 本工具的目标是把所有 Docker 项目的"图纸"（compose.yaml 配置文件）和"材料"（映射的数据目录）统一存放在一起：
 
 ```
-/opt/docker/                ← 统一大目录
+/opt/docker/                        ← 统一大目录
 ├── vaultwarden/                    ← 每个容器一个子目录
 │   ├── compose.yaml                ← 图纸（配置文件）
 │   └── vw-data/                    ← 材料（容器数据）
@@ -61,7 +61,7 @@
 | 🛡️ **系统路径白名单** | 45+ 系统级挂载（如 `/var/run/docker.sock`）自动识别保留 |
 | 💾 **永久保存设置** | 首次访问配置路径后永久记住，无需重复设置 |
 | 🔄 **双模式支持** | 同时支持 Docker Run 命令和 Docker Compose YAML 配置转换 |
-| 📦 **一键部署命令** | 转换结果自动包含完整部署命令，复制粘贴即可执行 |
+| 📦 **一键部署命令** | 转换结果自动生成完整部署命令，复制粘贴即可执行 |
 | 📱 **响应式设计** | 完美适配桌面端和移动端 |
 
 ---
@@ -74,13 +74,13 @@
 docker run -d \
   --name compose-tool \
   --restart unless-stopped \
-  -p 8765:80 \
+  -p 6688:80 \
   ghcr.io/beacherz/compose-tool:latest
 ```
 
-访问：`http://服务器IP:8765`
+访问：`http://服务器IP:6688`
 
->💡 本工具是纯静态网页，无数据持久化需求，无需挂载卷。
+> 💡 本工具是纯静态网页，无数据持久化需求，无需挂载卷。
 
 ---
 
@@ -95,7 +95,7 @@ services:
     container_name: compose-tool
     restart: unless-stopped
     ports:
-      - "8765:80"
+      - "6688:80"
     environment:
       - TZ=Asia/Shanghai
     healthcheck:
@@ -108,12 +108,12 @@ EOF
 docker compose up -d
 ```
 
-访问：`http://服务器IP:8765`
+访问：`http://服务器IP:6688`
 
 **常用管理命令**
 
 ```bash
-cd /opt/docker/compose-tool# 进入项目目录
+cd /opt/docker/compose-tool      # 进入项目目录
 docker compose logs -f            # 查看运行日志
 docker compose pull               # 拉取最新镜像
 docker compose up -d              # 重新部署（更新后执行）
@@ -134,37 +134,24 @@ docker compose down               # 停止并删除容器
 
 `{container_name}` 会自动替换为实际容器名，保存后永久生效，下次访问无需重新配置。
 
-**第 2 步：粘贴 Docker Run 命令或Compose 配置**
+**第 2 步：粘贴 Docker Run 命令或 Compose 配置**
 
 直接从官方文档或 GitHub 复制命令粘贴进去即可。
 
 **第 3 步：点击"转换配置"**
 
 工具自动完成：
-
--清理所有 Shell 变量（`$(pwd)`、`$HOME`、`~/` 等）
+- 清理所有 Shell 变量（`$(pwd)`、`$HOME`、`~/` 等）
 - 路径转换为统一绝对路径
 - 保留系统级挂载不修改
 - 添加标准配置（端口引号、重启策略等）
 
 **第 4 步：一键复制执行**
 
-点击右侧"复制"按钮，整段粘贴到终端执行即可，无需手动创建目录或文件：
+转换结果分为两部分，各有独立复制按钮：
 
-```bash
-# 转换结果上半部分是完整部署命令，示例：
-mkdir -p /opt/docker/vaultwarden && cd /opt/docker/vaultwarden && \
-cat > compose.yaml << 'EOF'
-services:
-  vaultwarden:
-    ...
-EOF
-docker compose up -d
-```
-
->💡 转换结果分两部分：  
-> **上半部分**：完整一键部署命令，直接复制到终端执行  
-> **下半部分**：纯 compose.yaml 内容，如需手动编辑可复制此部分
+- **🚀 一键部署命令**：包含目录创建、文件生成、容器启动的完整命令，直接复制到终端执行
+- **📄 compose.yaml 内容**：纯 YAML 配置，适合手动编辑或集成到其他工具
 
 ---
 
@@ -182,10 +169,9 @@ docker run -d --name vaultwarden \
   vaultwarden/server:latest
 ```
 
-**转换结果（直接复制到终端执行）**
+**转换结果（一键部署命令）**
 
 ```bash
-# 一键部署命令（复制下面整段到终端执行）
 mkdir -p /opt/docker/vaultwarden && cd /opt/docker/vaultwarden && \
 cat > compose.yaml << 'EOF'
 services:
@@ -205,7 +191,7 @@ docker compose up -d
 
 ---
 
-### 示例 2：官方 Compose →标准化路径
+### 示例 2：官方 Compose → 标准化路径
 
 **输入**
 
@@ -222,7 +208,6 @@ services:
 **输出**
 
 ```bash
-# 一键部署命令（复制下面整段到终端执行）
 mkdir -p /opt/docker/vaultwarden && cd /opt/docker/vaultwarden && \
 cat > compose.yaml << 'EOF'
 services:
@@ -254,7 +239,6 @@ docker run -d \
 **输出**
 
 ```bash
-# 一键部署命令（复制下面整段到终端执行）
 mkdir -p /opt/docker/portainer && cd /opt/docker/portainer && \
 cat > compose.yaml << 'EOF'
 services:
@@ -283,7 +267,7 @@ docker compose up -d
 
 ### 备份单个项目
 
-以下命令将`vaultwarden` 项目打包为压缩包，保存在 `/root/` 目录：
+以下命令将 `vaultwarden` 项目打包为压缩包，保存在 `/root/` 目录：
 
 ```bash
 tar -czf /root/vaultwarden-backup.tar.gz /opt/docker/vaultwarden
@@ -399,10 +383,10 @@ cd /opt/docker/vaultwarden && docker compose up -d
 | **Docker** | `/var/run/docker.sock`、`/var/lib/docker`、`/usr/bin/docker` |
 | **内核/设备** | `/proc`、`/sys`、`/dev`、`/boot`、`/lib/modules` |
 | **系统配置** | `/etc/localtime`、`/etc/hosts`、`/etc/resolv.conf`、`/etc/timezone` |
-| **SSL证书** | `/etc/ssl`、`/etc/pki`、`/etc/ca-certificates` |
+| **SSL 证书** | `/etc/ssl`、`/etc/pki`、`/etc/ca-certificates` |
 | **用户/组** | `/etc/passwd`、`/etc/group`、`/etc/shadow`、`/etc/gshadow` |
 
-完整白名单包含45+ 路径，覆盖所有常见系统级挂载。
+完整白名单包含 45+ 路径，覆盖所有常见系统级挂载。
 
 ---
 
