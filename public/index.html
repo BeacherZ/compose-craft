@@ -39,6 +39,9 @@
         .btn-primary:hover { background: #1a7bc9; }
         .panel { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 16px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
         .panel > h2 { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); color: var(--primary-color); font-size: 18px; flex-shrink: 0; }
+        .panel-section { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 10px; }
+        .panel-section:last-child { margin-bottom: 0; }
+        .panel-section .output { flex: 1; min-height: 150px; }
         .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
         .panel-header h2 { color: var(--primary-color); margin: 0; padding: 0; border: none; font-size: 18px; }
         .copy-output-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; font-size: 14px; font-weight: 600; color: #555; background: #f0f2f5; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; white-space: nowrap; flex-shrink: 0; }
@@ -81,6 +84,7 @@
             .input-group.flex-grow { flex: none; }
             textarea { flex: none; min-height: 160px; height: 160px; }
             .output { flex: none; min-height: 250px; font-size: 13px; padding: 10px; }
+            .panel-section .output { min-height: 120px; }
             .panel > h2 { font-size: 15px; }
             label { font-size: 14px; }
             input[type="text"], textarea { font-size: 14px; padding: 8px; }
@@ -151,15 +155,29 @@
     </div>
 
     <div class="panel">
-        <div class="panel-header">
-            <h2>生成的 Docker Compose 配置</h2>
-            <button class="copy-output-btn" id="copyOutputBtn" title="复制配置内容">
-                <svg id="copyIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                <svg id="checkIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span id="copyOutputLabel">复制</span>
-            </button>
+        <div class="panel-section">
+            <div class="panel-header">
+                <h2>🚀 一键部署命令</h2>
+                <button class="copy-output-btn" id="copyDeployBtn" title="复制部署命令">
+                    <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span class="copy-label">复制</span>
+                </button>
+            </div>
+            <div class="output" id="deployOutput">粘贴到终端执行，自动完成目录创建、文件生成、容器启动</div>
         </div>
-        <div class="output" id="output"># 生成的 Docker Compose 配置将显示在这里</div>
+
+        <div class="panel-section">
+            <div class="panel-header">
+                <h2>📄 compose.yaml 内容</h2>
+                <button class="copy-output-btn" id="copyYamlBtn" title="复制 YAML 内容">
+                    <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span class="copy-label">复制</span>
+                </button>
+            </div>
+            <div class="output" id="yamlOutput">纯 compose.yaml 配置内容，适合手动编辑或集成到其他工具</div>
+        </div>
     </div>
 </div>
 <script>
@@ -169,12 +187,9 @@
     function init() {
         var dockerCommandEl = document.getElementById('dockerCommand');
         var volumePrefixEl = document.getElementById('volumePrefix');
-        var output = document.getElementById('output');
+        var deployOutput = document.getElementById('deployOutput');
+        var yamlOutput = document.getElementById('yamlOutput');
         var convertBtn = document.getElementById('convertBtn');
-        var copyOutputBtn = document.getElementById('copyOutputBtn');
-        var copyOutputLabel = document.getElementById('copyOutputLabel');
-        var copyIcon = document.getElementById('copyIcon');
-        var checkIcon = document.getElementById('checkIcon');
         var cbRestart = document.getElementById('restartPolicy');
         var cbPrivileged = document.getElementById('privilegedMode');
 
@@ -234,15 +249,40 @@
             }
         });
 
+        function setupCopyButton(btnId, outputId) {
+            var btn = document.getElementById(btnId);
+            var outputEl = document.getElementById(outputId);
+            btn.addEventListener('click', function () {
+                var text = outputEl.textContent;
+                var defaultTexts = [
+                    '粘贴到终端执行，自动完成目录创建、文件生成、容器启动',
+                    '纯 compose.yaml 配置内容，适合手动编辑或集成到其他工具'
+                ];
+                if (!text || defaultTexts.includes(text)) return;
+                
+                var copyIcon = btn.querySelector('.copy-icon');
+                var checkIcon = btn.querySelector('.check-icon');
+                var copyLabel = btn.querySelector('.copy-label');
+                
+                navigator.clipboard.writeText(text).then(function () {
+                    btn.classList.add('copied');
+                    copyIcon.style.display = 'none';
+                    checkIcon.style.display = '';
+                    copyLabel.textContent = '已复制';
+                    setTimeout(function () {
+                        btn.classList.remove('copied');
+                        copyIcon.style.display = '';
+                        checkIcon.style.display = 'none';
+                        copyLabel.textContent = '复制';
+                    }, 2000);
+                }).catch(function () { alert('复制失败，请手动选中内容复制'); });
+            });
+        }
+
+        setupCopyButton('copyDeployBtn', 'deployOutput');
+        setupCopyButton('copyYamlBtn', 'yamlOutput');
+
         convertBtn.addEventListener('click', convertCommand);
-        copyOutputBtn.addEventListener('click', function () {
-            var text = output.textContent;
-            if (!text || text === '# 生成的 Docker Compose 配置将显示在这里') return;
-            navigator.clipboard.writeText(text).then(function () {
-                copyOutputBtn.classList.add('copied'); copyIcon.style.display = 'none'; checkIcon.style.display = ''; copyOutputLabel.textContent = '已复制';
-                setTimeout(function () { copyOutputBtn.classList.remove('copied'); copyIcon.style.display = ''; checkIcon.style.display = 'none'; copyOutputLabel.textContent = '复制'; }, 2000);
-            }).catch(function () { alert('复制失败，请手动选中内容复制'); });
-        });
 
         function tokenize(str) {
             var tokens = [], current = '', inD = false, inS = false;
@@ -396,38 +436,57 @@
             var yaml = result.join('\n');
             var deployContainerName = containerName || 'my-service';
             var deployCommand = 
-"# 一键部署命令（复制下面整段到终端执行）\n" +
 "mkdir -p /opt/docker/" + deployContainerName + " && cd /opt/docker/" + deployContainerName + " && \\\n" +
 "cat > compose.yaml << 'EOF'\n" +
 yaml +
 "\nEOF\n" +
-"docker compose up -d\n\n" +
-"# ═══════════════════════════════════════\n" +
-"# 如果只需要 compose.yaml 内容，复制下方：\n" +
-"# ═══════════════════════════════════════\n\n" +
-yaml;
-            return deployCommand;
+"docker compose up -d";
+            
+            return { deploy: deployCommand, yaml: yaml };
         }
 
         function convertCommand() {
             var raw = dockerCommandEl.value.trim();
-            if (!raw) { setError('# 错误：请输入 Docker Run 命令或 Docker Compose 配置'); return; }
-            if (raw.includes('services:') || raw.includes('version:')) {
-                try {
-                    var yaml = processComposeYaml(raw);
-                    output.classList.remove('error'); output.classList.add('success'); output.textContent = yaml;
-                } catch (err) { setError('# 错误: ' + err.message); }
-            } else {
-                var result = extractRunCommand(raw);
-                if (!result.runCommand) { setError('# 错误：未找到 Docker Run 命令，请确保输入中包含以 "docker run" 开头的命令'); return; }
-                try {
-                    var yaml = parseDockerCommand(result.runCommand, result.pullImage);
-                    output.classList.remove('error'); output.classList.add('success'); output.textContent = yaml;
-                } catch (err) { setError('# 错误: ' + err.message); }
+            
+            if (!raw) { 
+                setError('请输入 Docker Run 命令或 Docker Compose 配置'); 
+                return; 
+            }
+            
+            try {
+                var result;
+                if (raw.includes('services:') || raw.includes('version:')) {
+                    result = processComposeYaml(raw);
+                } else {
+                    var extracted = extractRunCommand(raw);
+                    if (!extracted.runCommand) { 
+                        setError('未找到 Docker Run 命令，请确保输入中包含以 "docker run" 开头的命令'); 
+                        return; 
+                    }
+                    result = parseDockerCommand(extracted.runCommand, extracted.pullImage);
+                }
+                
+                deployOutput.classList.remove('error');
+                deployOutput.classList.add('success');
+                deployOutput.textContent = result.deploy;
+                
+                yamlOutput.classList.remove('error');
+                yamlOutput.classList.add('success');
+                yamlOutput.textContent = result.yaml;
+            } catch (err) { 
+                setError(err.message); 
             }
         }
 
-        function setError(msg) { output.classList.remove('success'); output.classList.add('error'); output.textContent = msg; }
+        function setError(msg) {
+            deployOutput.classList.remove('success');
+            deployOutput.classList.add('error');
+            deployOutput.textContent = '错误：' + msg;
+            
+            yamlOutput.classList.remove('success');
+            yamlOutput.classList.add('error');
+            yamlOutput.textContent = '';
+        }
 
         function parseDockerCommand(command, pullImage) {
             var args = command.replace(/^docker run\s*/, '');
@@ -504,17 +563,13 @@ yaml;
             if (Object.keys(topNet).length) { y += "\nnetworks:\n"; for (var nn in topNet) { y += "  " + nn + ":\n"; if (topNet[nn].external) y += "    external: true\n"; } }
             
             var deployCommand = 
-"# 一键部署命令（复制下面整段到终端执行）\n" +
 "mkdir -p /opt/docker/" + finalName + " && cd /opt/docker/" + finalName + " && \\\n" +
 "cat > compose.yaml << 'EOF'\n" +
 y +
 "EOF\n" +
-"docker compose up -d\n\n" +
-"# ═══════════════════════════════════════\n" +
-"# 如果只需要 compose.yaml 内容，复制下方：\n" +
-"# ═══════════════════════════════════════\n\n" +
-y;
-            return deployCommand;
+"docker compose up -d";
+            
+            return { deploy: deployCommand, yaml: y };
         }
     }
 })();
