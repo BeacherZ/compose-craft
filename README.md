@@ -1,12 +1,54 @@
-# Compose Craft 🎨
+# Compose Tool 🐳
 
-**精心打造你的 Docker Compose 配置**
+**Docker Compose 配置转换工具**
 
 一键转换 Docker Run 命令和 Docker Compose 配置，实现"一容器一目录"的标准化管理。
 
 ![License](https://img.shields.io/github/license/BeacherZ/compose-craft?style=flat-square)
 ![Docker](https://img.shields.io/badge/docker-ready-blue?style=flat-square&logo=docker)
 ![GitHub Stars](https://img.shields.io/github/stars/BeacherZ/compose-craft?style=flat-square)
+
+---
+
+## 🏗️ 核心哲学：图纸与材料同屋存放
+
+### 问题
+
+装了几个 Docker 项目后，各种映射卷零零散散躺在宿主机的各个目录里，极其混乱：
+
+```
+/root/data/          ← 有些项目装这里
+/home/user/docker/   ← 有些装这里
+/var/lib/myapp/      ← 有些装这里
+/tmp/test/           ← 还有些随手放的
+```
+
+### 解决方案
+
+本工具的目标是把所有 Docker 项目的"图纸"（compose.yaml 配置文件）和"材料"（映射的数据目录）统一存放在一起：
+
+```
+/opt/docker/← 统一大目录
+├── vaultwarden/                    ← 每个容器一个子目录
+│   ├── compose.yaml                ← 图纸（配置文件）
+│   └── vw-data/                    ← 材料（容器数据）
+├── portainer/
+│   ├── compose.yaml
+│   └── portainer-data/
+├── compose-craft/                  ← 本项目自身也遵循此规范
+│   └── compose.yaml                ← 本项目无数据卷，只有配置文件
+└── nextcloud/
+    ├── compose.yaml
+    └── data/
+```
+
+### 好处
+
+- **备份极简**：备份整个 `/opt/docker` 目录即可备份所有项目的配置和数据
+- **迁移无痛**：打包 → 上传到新服务器 → 解压 → 一键启动，完整恢复
+- **管理清晰**：进入任意子目录执行 `docker compose up -d` 即可启动对应项目
+
+> 本工具默认路径为 `/opt/docker/{container_name}`，首次访问时可在设置中修改为你自己的路径。
 
 ---
 
@@ -37,13 +79,13 @@ docker run -d \
 
 访问：`http://服务器IP:8765`
 
-> 💡 **说明**：本工具是纯静态网页，无数据持久化需求，无需挂载卷。
+>💡 本工具是纯静态网页，无数据持久化需求，无需挂载卷。
 
 ---
 
-### 方式二：Docker Compose（推荐）
+### 方式二：Docker Compose（推荐，符合本工具理念）
 
-**第 1 步：创建项目目录**
+**第1 步：创建项目目录**
 
 ```bash
 mkdir -p /opt/docker/compose-craft
@@ -78,77 +120,52 @@ EOF
 docker compose up -d
 ```
 
-> ✅ **符合"图纸与材料同屋"理念**：配置文件存放在 `/opt/docker/compose-craft/compose.yaml`，虽然本项目无数据卷需求，但目录结构统一，方便管理。
+访问：`http://服务器IP:8765`
 
 **常用命令**
 
 ```bash
-docker compose logs -f    # 查看日志
-docker compose pull       # 更新镜像
-docker compose up -d      # 重新部署
-docker compose down       # 停止服务
+docker compose logs -f    # 查看运行日志
+docker compose pull       # 拉取最新镜像
+docker compose up -d      # 重新部署（更新后执行）
+docker compose down       # 停止并删除容器
 ```
 
 ---
 
 ## 🎯 使用流程
 
-### 第 1 步：首次访问自动引导
+**第 1 步：首次访问自动弹出设置窗口**
 
-打开网页后会自动弹出设置窗口，配置你的默认卷映射路径，例如：
+配置你的默认卷映射路径，推荐填写：
 
 ```
 /opt/docker/{container_name}
 ```
 
-`{container_name}` 会自动替换为实际容器名，保存后永久生效。
+`{container_name}` 会自动替换为实际容器名，保存后永久生效，下次访问无需重新配置。
 
-### 第 2 步：粘贴命令或配置
+**第 2 步：粘贴 Docker Run 命令或Compose 配置**
 
-支持两种输入方式：
+直接从官方文档或GitHub 复制命令粘贴进去即可。
 
-**① Docker Run 命令**
+**第 3 步：点击"转换配置"**
 
-```bash
-docker run -d --name vaultwarden \
-  -p 8000:80 \
-  -v $(pwd)/vw-data:/data \
-  -e DOMAIN=https://vw.example.com \
-  vaultwarden/server:latest
-```
+工具自动完成：
+- 清理所有 Shell 变量（`$(pwd)`、`$HOME`、`~/` 等）
+- 路径转换为统一绝对路径
+- 保留系统级挂载不修改
+- 添加标准配置（端口引号、重启策略等）
 
-**② Docker Compose YAML**
-
-```yaml
-services:
-  vaultwarden:
-    image: vaultwarden/server:latest
-    volumes:
-      - ./vw-data:/data
-    ports:
-      - 8000:80
-```
-
-### 第 3 步：一键转换
-
-点击"转换配置"按钮，工具会自动：
-
-- ✅ 清理所有 Shell 变量（`$(pwd)`、`$HOME`、`~/`等）
-- ✅ 统一路径格式为绝对路径
-- ✅ 识别并保留系统级挂载（如 `/var/run/docker.sock`）
-- ✅ 添加标准化配置（端口引号、重启策略等）
-
-### 第 4 步：复制并部署
-
-点击右侧"复制"按钮，然后：
+**第 4 步：复制并部署**
 
 ```bash
 # 创建项目目录
-mkdir -p /opt/docker/vaultwarden
-cd /opt/docker/vaultwarden
+mkdir -p /opt/docker/容器名
+cd /opt/docker/容器名
 
-# 保存配置
-vim compose.yaml  # 粘贴转换结果
+# 粘贴转换结果并保存
+vim compose.yaml
 
 # 启动服务
 docker compose up -d
@@ -158,7 +175,7 @@ docker compose up -d
 
 ## 📖 转换示例
 
-### 示例 1：Docker Run → Compose（自动清理 Shell 变量）
+### 示例 1：Docker Run → Compose
 
 **输入**
 
@@ -186,16 +203,11 @@ services:
     restart: unless-stopped
 ```
 
-**改动说明**：
-- `$(pwd)` 被清理，使用自定义绝对路径
-- 端口自动加引号
-- 自动添加 `restart: unless-stopped`
-
 ---
 
-### 示例 2：官方 Compose → 标准化路径
+### 示例 2：官方 Compose →标准化路径
 
-**输入（官方示例）**
+**输入**
 
 ```yaml
 services:
@@ -207,7 +219,7 @@ services:
       - 8000:80
 ```
 
-**输出（标准化）**
+**输出**
 
 ```yaml
 services:
@@ -220,11 +232,6 @@ services:
       - "/opt/docker/vaultwarden/vw-data:/data"
     restart: unless-stopped
 ```
-
-**改动说明**：
-- `./vw-data` 转换为绝对路径
-- 自动添加 `container_name`
-- 自动添加 `restart: unless-stopped`
 
 ---
 
@@ -253,53 +260,124 @@ services:
     restart: unless-stopped
 ```
 
-**改动说明**：
-- `/var/run/docker.sock` 识别为系统路径，保持原样
-- `~/portainer-data` 被清理并转换为绝对路径
-
 ---
 
 ## 💾 备份与迁移
 
-### 备份 Compose Craft 本身
+### 备份原理
 
-```bash
-# 虽然本项目无数据卷，但可以备份配置文件方便恢复
-tar -czf compose-craft-backup.tar.gz /opt/docker/compose-craft
-```
+按照本工具的理念，所有项目的配置文件和数据都在 `/opt/docker/` 目录下，备份只需打包这个目录即可。
+
+---
 
 ### 备份单个项目
 
+以下命令将`vaultwarden` 项目打包为压缩包，保存在当前用户的家目录（`/root/`）：
+
 ```bash
-tar -czf vaultwarden-backup.tar.gz /opt/docker/vaultwarden
+tar -czf /root/vaultwarden-backup.tar.gz /opt/docker/vaultwarden
 ```
+
+执行后，压缩包位置：`/root/vaultwarden-backup.tar.gz`
+
+---
 
 ### 备份所有项目
 
 ```bash
-tar -czf docker-all-backup.tar.gz /opt/docker
+tar -czf /root/docker-all-backup.tar.gz /opt/docker
 ```
+
+执行后，压缩包位置：`/root/docker-all-backup.tar.gz`
+
+---
+
+### 下载压缩包到本地电脑
+
+**方法一：使用 scp 命令（在本地电脑终端执行）**
+
+```bash
+# 下载单个项目备份
+scp root@你的服务器IP:/root/vaultwarden-backup.tar.gz ./
+
+# 下载全部项目备份
+scp root@你的服务器IP:/root/docker-all-backup.tar.gz ./
+```
+
+**方法二：使用 FTP 工具（推荐新手）**
+
+使用 [FileZilla](https://filezilla-project.org/) 或 [WinSCP](https://winscp.net/) 连接服务器，进入 `/root/` 目录，下载对应的 `.tar.gz` 文件到本地电脑。
+
+---
 
 ### 迁移到新服务器
 
+**第 1 步：在新服务器安装 Docker**
+
 ```bash
-# 1. 安装 Docker
 curl -fsSL https://get.docker.com | sh
+```
 
-# 2. 上传并解压备份
-tar -xzf docker-all-backup.tar.gz -C /
+**第 2 步：上传压缩包到新服务器**
 
-# 3. 批量启动所有容器
+**方法一：使用 scp 命令（在本地电脑终端执行）**
+
+```bash
+# 上传到新服务器的 /root/ 目录
+scp docker-all-backup.tar.gz root@新服务器IP:/root/
+```
+
+**方法二：使用 FTP 工具**
+
+用 FileZilla 或 WinSCP 连接新服务器，将压缩包上传到新服务器的 `/root/` 目录。
+
+**第 3 步：在新服务器上解压**
+
+```bash
+# 解压到根目录，会自动还原 /opt/docker/ 目录结构
+tar -xzf /root/docker-all-backup.tar.gz -C /
+```
+
+解压后目录结构自动恢复：
+
+```
+/opt/docker/
+├── vaultwarden/
+│   ├── compose.yaml
+│   └── vw-data/
+├── portainer/
+│   ├── compose.yaml
+│   └── portainer-data/
+└── ...
+```
+
+**第 4 步：一键启动所有容器**
+
+```bash
 for dir in /opt/docker/*/; do
+  echo "启动 $dir ..."
   (cd "$dir" && docker compose up -d)
 done
 ```
 
 ---
 
-## 🛡️ 系统路径白名单（自动保留不转换）
+### 单独恢复某个项目
 
-以下路径会自动识别并保留，不做转换：
+如果只需要恢复其中一个项目：
+
+```bash
+# 解压到根目录（会还原到 /opt/docker/vaultwarden/）
+tar -xzf /root/vaultwarden-backup.tar.gz -C /
+
+# 进入目录启动
+cd /opt/docker/vaultwarden
+docker compose up -d
+```
+
+---
+
+## 🛡️ 系统路径白名单（自动保留不转换）
 
 | 分类 | 路径示例 |
 |---|---|
@@ -309,11 +387,11 @@ done
 | **SSL 证书** | `/etc/ssl`、`/etc/pki`、`/etc/ca-certificates` |
 | **用户/组** | `/etc/passwd`、`/etc/group`、`/etc/shadow`、`/etc/gshadow` |
 
-**完整白名单包含 45+ 路径**，覆盖所有常见系统级挂载。
+完整白名单包含 45+ 路径，覆盖所有常见系统级挂载。
 
 ---
 
-## 📋 支持的 Docker Run 参数
+##📋 支持的 Docker Run 参数
 
 | 参数 | 支持 | 说明 |
 |---|:---:|---|
@@ -339,23 +417,18 @@ done
 
 ### 自定义端口
 
-默认端口是 `8765`，修改方法：
-
 ```bash
-# Docker Run
+# Docker Run 方式
 docker run -d -p 你的端口:80 ghcr.io/beacherz/compose-craft:latest
 
-# Docker Compose
-# 编辑 compose.yaml，修改 ports 部分：
+# Docker Compose 方式：编辑 compose.yaml 修改 ports 部分
 ports:
   - "你的端口:80"
 ```
 
 ### 修改默认路径
 
-首次访问设置后，可随时点击右上角 ⚙️ **设置** 按钮修改。
-
-设置保存在浏览器本地（localStorage），迁移到新浏览器需要重新设置。
+首次访问后可随时点击右上角 ⚙️ **设置** 按钮修改，设置保存在浏览器本地。
 
 ### 更新到最新版本
 
@@ -363,26 +436,6 @@ ports:
 cd /opt/docker/compose-craft
 docker compose pull
 docker compose up -d
-```
-
----
-
-## 🤝 贡献指南
-
-欢迎提交 Issue 和 Pull Request！
-
-```bash
-# 1. Fork 本仓库
-# 2. 创建特性分支
-git checkout -b feature/amazing-feature
-
-# 3. 提交更改
-git commit -m 'Add amazing feature'
-
-# 4. 推送到分支
-git push origin feature/amazing-feature
-
-# 5. 提交 Pull Request
 ```
 
 ---
