@@ -1,15 +1,11 @@
 services:
-  compose-craft:
+  compose-tool:
     image: ghcr.io/beacherz/compose-tool:latest
-    ghcr.io/beacherz/container_name: compose-toolcompose-tool:latest
-    restart: unless-stopped
+    container_name: compose-toolrestart: unless-stopped
     ports:
       - "8765:80"
     environment:
-      - TZ=Asia/Shanghai
-    labels:
-      - "com.docker.compose.project=compose-craft"
-    healthcheck:
+      - TZ=Asia/Shanghaihealthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 3s
