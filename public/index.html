@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compose Craft - Docker 配置转换工具</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'><path fill='%232496ed' d='M349.9 236.3h-66.1v-59.4h66.1v59.4zm0-204.3h-66.1v60.7h66.1V32zm78.2 144.8H362v59.4h66.1v-59.4zm-156.3-72.1h-66.1v60.1h66.1v-60.1zm78.1 0h-66.1v60.1h66.1v-60.1zm276.8 100c-14.4-9.7-47.6-13.2-73.1-8.4-3.3-24-16.7-44.9-41.1-63.7l-14-9.3-9.3 14c-18.4 27.8-23.4 73.6-3.7 103.8-8.7 4.7-25.8 11.1-48.4 10.7H2.4c-7.6 42.6-1 99.4 25.9 143.2 29.2 47.6 81.8 71.5 152.8 71.5 133.2 0 241.9-66.8 294.4-210.6 19.1.3 60.4.5 81.6-40.5.5-.9 1.7-3.2 5.5-11.2l2-4.4-13.7-9.2zM124.1 236.3H58v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1v-59.4zm-78.1-72.1H136v60.1h66.1v-60.1z'/></svg>" type="image/svg+xml">
+    <style>
+        :root { --primary-color: #2496ed; --secondary-color: #f8f9fa; --border-color: #dee2e6; --success-color: #28a745; --error-color: #dc3545; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.5; color: #333; background-color: #f0f2f5; padding: 10px 15px; display: flex; flex-direction: column; }
+        .container { max-width: 1600px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; gap: 10px; flex: 1; min-height: 0; }
+        header { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex-wrap: wrap; position: relative; }
+        .docker-logo { width: 36px; height: 36px; flex-shrink: 0; }
+        header h1 { color: var(--primary-color); margin: 0; font-size: 22px; white-space: nowrap; }
+        header .sep { color: #ccc; font-size: 22px; margin: 0 2px; }
+        header p { margin: 0; font-size: 15px; color: #888; }
+        .settings-btn { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 8px 16px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s; margin: 0; }
+        .settings-btn:hover { background: #1a7bc9; transform: translateY(-50%) scale(1.05); }
+        .settings-btn svg { flex-shrink: 0; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); animation: modalSlideIn 0.3s ease-out; }
+        @keyframes modalSlideIn { from { opacity: 0; transform: translateY(-50px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border-color); }
+        .modal-header h3 { margin: 0; color: var(--primary-color); font-size: 20px; }
+        .modal-close { background: none; border: none; font-size: 32px; color: #999; cursor: pointer; padding: 0; width: 32px; height: 32px; line-height: 1; transition: color 0.2s; margin: 0; }
+        .modal-close:hover { color: var(--error-color); }
+        .modal-body { padding: 20px; }
+        .modal-body label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 16px; }
+        .modal-body input[type="text"] { width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 6px; font-size: 15px; font-family: monospace; transition: border-color 0.3s; }
+        .modal-body input[type="text"]:focus { outline: none; border-color: var(--primary-color); }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 20px; border-top: 1px solid var(--border-color); }
+        .btn-secondary, .btn-primary { padding: 10px 20px; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s; margin: 0; }
+        .btn-secondary { background: #e9ecef; color: #495057; }
+        .btn-secondary:hover { background: #dee2e6; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: #1a7bc9; }
+        .panel { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 16px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+        .panel > h2 { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); color: var(--primary-color); font-size: 18px; flex-shrink: 0; }
+        .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        .panel-header h2 { color: var(--primary-color); margin: 0; padding: 0; border: none; font-size: 18px; }
+        .copy-output-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; font-size: 14px; font-weight: 600; color: #555; background: #f0f2f5; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; white-space: nowrap; flex-shrink: 0; }
+        .copy-output-btn:hover { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .copy-output-btn.copied { background: var(--success-color); color: white; border-color: var(--success-color); }
+        .copy-output-btn svg { flex-shrink: 0; }
+        .input-group { margin-bottom: 10px; flex-shrink: 0; }
+        .input-group.flex-grow { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        label { display: block; margin-bottom: 3px; font-weight: 600; font-size: 16px; }
+        input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit; font-size: 16px; }
+        textarea { resize: vertical; flex: 1; min-height: 80px; font-family: monospace; font-size: 15px; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 6px; }
+        .checkbox-item { display: flex; align-items: center; gap: 5px; }
+        .checkbox-item input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; }
+        .checkbox-item label { font-weight: normal; margin-bottom: 0; font-size: 15px; }
+        button { background-color: var(--primary-color); color: white; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: 600; transition: background-color 0.3s; margin-top: 8px; flex-shrink: 0; }
+        button:hover { background-color: #1a7bc9; }
+        .output { background-color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 14px; font-family: monospace; font-size: 15px; white-space: pre-wrap; overflow: auto; flex: 1; min-height: 0; }
+        .success { color: var(--success-color); }
+        .error { color: var(--error-color); }
+        .hint { font-size: 13px; color: #6c757d; margin-top: 3px; line-height: 1.6; }
+        .hint code { background: #eee; padding: 0 3px; border-radius: 3px; font-size: 12px; }
+        #volumePrefix { font-family: monospace; font-size: 15px; }
+        @media (max-width: 768px) {
+            html, body { height: auto; overflow: auto; }
+            body { padding: 8px; }
+            .container { grid-template-columns: 1fr; grid-template-rows: auto auto auto; flex: none; gap: 8px; }
+            header { flex-direction: column; gap: 4px; padding: 10px 12px; text-align: center; position: relative; padding-top: 50px; }
+            header h1 { font-size: 16px; white-space: normal; line-height: 1.3; }
+            header .sep { display: none; }
+            header p { font-size: 12px; }
+            .docker-logo { width: 28px; height: 28px; }
+            .settings-btn { position: absolute; right: 10px; top: 10px; transform: none; padding: 6px 12px; font-size: 13px; }
+            .settings-btn:hover { transform: scale(1.05); }
+            .modal-content { width: 95%; margin: 10px; }
+            .panel { padding: 12px; overflow: visible; min-height: auto; }
+            .panel-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .panel-header h2 { font-size: 15px; }
+            .copy-output-btn { align-self: flex-end; font-size: 12px; padding: 4px 10px; margin-top: -2px; }
+            .input-group.flex-grow { flex: none; }
+            textarea { flex: none; min-height: 160px; height: 160px; }
+            .output { flex: none; min-height: 250px; font-size: 13px; padding: 10px; }
+            .panel > h2 { font-size: 15px; }
+            label { font-size: 14px; }
+            input[type="text"], textarea { font-size: 14px; padding: 8px; }
+            #volumePrefix { font-size: 13px; }
+            .checkbox-item label { font-size: 13px; }
+            .checkbox-item input[type="checkbox"] { width: 15px; height: 15px; }
+            .hint { font-size: 11px; }
+            button { font-size: 15px; padding: 10px 16px; width: 100%; margin-top: 6px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <svg class="docker-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path fill="#2496ed" d="M349.9 236.3h-66.1v-59.4h66.1v59.4zm0-204.3h-66.1v60.7h66.1V32zm78.2 144.8H362v59.4h66.1v-59.4zm-156.3-72.1h-66.1v60.1h66.1v-60.1zm78.1 0h-66.1v60.1h66.1v-60.1zm276.8 100c-14.4-9.7-47.6-13.2-73.1-8.4-3.3-24-16.7-44.9-41.1-63.7l-14-9.3-9.3 14c-18.4 27.8-23.4 73.6-3.7 103.8-8.7 4.7-25.8 11.1-48.4 10.7H2.4c-7.6 42.6-1 99.4 25.9 143.2 29.2 47.6 81.8 71.5 152.8 71.5 133.2 0 241.9-66.8 294.4-210.6 19.1.3 60.4.5 81.6-40.5.5-.9 1.7-3.2 5.5-11.2l2-4.4-13.7-9.2zM124.1 236.3H58v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1v-59.4zm-78.1-72.1H136v60.1h66.1v-60.1z"/></svg>
+        <h1>Compose Craft</h1>
+        <span class="sep">|</span>
+        <p>Docker 配置转换工具</p>
+        <button class="settings-btn" id="settingsBtn" title="设置默认卷映射路径">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m-9-9h6m6 0h6"></path><path d="M19.07 4.93l-2.12 2.12m-9.9 9.9L4.93 19.07m0-14.14l2.12 2.12m9.9 9.9l2.12 2.12"></path></svg>
+            设置
+        </button>
+    </header>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚙️ 初始化设置</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label for="modalVolumePrefix">默认卷映射绝对路径</label>
+                <input type="text" id="modalVolumePrefix" placeholder="/home/dpanel/compose/{container_name}">
+                <div class="hint">
+                    · <code>{container_name}</code> 会自动替换为实际容器名<br>
+                    · 此设置永久保存到本地浏览器，下次访问自动生效<br>
+                    · 可随时点击右上角 ⚙️ 设置按钮修改
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="resetDefault" class="btn-secondary">恢复默认</button>
+                <button id="saveSettings" class="btn-primary">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>输入 Docker Run 命令 / Docker Compose 配置</h2>
+        <div class="input-group flex-grow">
+            <label for="dockerCommand">Docker Run 命令 / Docker Compose 配置</label>
+            <textarea id="dockerCommand" placeholder="# 请输入 Docker Run 命令或 Docker Compose YAML 配置"></textarea>
+            <div class="hint">支持 Docker Run 命令（含 docker pull）、多行命令（带 \ 或漏写 \）、或完整的 Docker Compose YAML 配置</div>
+        </div>
+        <div class="input-group">
+            <label for="volumePrefix">自定义卷映射绝对路径</label>
+            <input type="text" id="volumePrefix">
+            <div class="hint">· 留空则不做任何替换<br>· <code>$(pwd)</code> 等 shell 变量会被自动去掉<br>· <code>{container_name}</code> 会自动替换为实际容器名<br>· 系统级挂载如 <code>/var/run/docker.sock</code> 等不会被替换</div>
+        </div>
+        <div class="input-group">
+            <label>常用选项</label>
+            <div class="checkbox-group">
+                <div class="checkbox-item"><input type="checkbox" id="restartPolicy" checked><label for="restartPolicy">自动重启 (--restart unless-stopped)</label></div>
+                <div class="checkbox-item"><input type="checkbox" id="privilegedMode"><label for="privilegedMode">特权模式 (--privileged)</label></div>
+            </div>
+            <div class="hint">仅在命令中<strong>未显式指定</strong>对应参数时生效</div>
+        </div>
+        <button id="convertBtn">转换配置</button>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>生成的 Docker Compose 配置</h2>
+            <button class="copy-output-btn" id="copyOutputBtn" title="复制配置内容">
+                <svg id="copyIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <svg id="checkIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span id="copyOutputLabel">复制</span>
+            </button>
+        </div>
+        <div class="output" id="output"># 生成的 Docker Compose 配置将显示在这里</div>
+    </div>
+</div>
+<script>
+(function () {
+    init();
+
+    function init() {
+        var dockerCommandEl = document.getElementById('dockerCommand');
+        var volumePrefixEl = document.getElementById('volumePrefix');
+        var output = document.getElementById('output');
+        var convertBtn = document.getElementById('convertBtn');
+        var copyOutputBtn = document.getElementById('copyOutputBtn');
+        var copyOutputLabel = document.getElementById('copyOutputLabel');
+        var copyIcon = document.getElementById('copyIcon');
+        var checkIcon = document.getElementById('checkIcon');
+        var cbRestart = document.getElementById('restartPolicy');
+        var cbPrivileged = document.getElementById('privilegedMode');
+
+        var settingsBtn = document.getElementById('settingsBtn');
+        var settingsModal = document.getElementById('settingsModal');
+        var closeModal = document.getElementById('closeModal');
+        var modalVolumePrefix = document.getElementById('modalVolumePrefix');
+        var saveSettings = document.getElementById('saveSettings');
+        var resetDefault = document.getElementById('resetDefault');
+
+        var userCustomPath = localStorage.getItem('volumePrefix');
+        var fallback = '/home/dpanel/compose/{container_name}';
+
+        if (userCustomPath) {
+            volumePrefixEl.value = userCustomPath;
+        } else {
+            volumePrefixEl.value = fallback;
+            modalVolumePrefix.value = fallback;
+            settingsModal.classList.add('active');
+        }
+
+        settingsBtn.addEventListener('click', function () {
+            modalVolumePrefix.value = volumePrefixEl.value;
+            settingsModal.classList.add('active');
+        });
+
+        closeModal.addEventListener('click', function () {
+            settingsModal.classList.remove('active');
+        });
+
+        settingsModal.addEventListener('click', function (e) {
+            if (e.target === settingsModal) {
+                settingsModal.classList.remove('active');
+            }
+        });
+
+        saveSettings.addEventListener('click', function () {
+            var newPath = modalVolumePrefix.value.trim();
+            if (newPath) {
+                localStorage.setItem('volumePrefix', newPath);
+                volumePrefixEl.value = newPath;
+                alert('✅ 设置已保存！下次访问自动生效。');
+            } else {
+                localStorage.removeItem('volumePrefix');
+                volumePrefixEl.value = fallback;
+                alert('✅ 已清空自定义路径，使用默认值。');
+            }
+            settingsModal.classList.remove('active');
+        });
+
+        resetDefault.addEventListener('click', function () {
+            if (confirm('确定恢复为默认值吗？')) {
+                localStorage.removeItem('volumePrefix');
+                modalVolumePrefix.value = fallback;
+                volumePrefixEl.value = fallback;
+                alert('✅ 已恢复默认设置！');
+            }
+        });
+
+        convertBtn.addEventListener('click', convertCommand);
+        copyOutputBtn.addEventListener('click', function () {
+            var text = output.textContent;
+            if (!text || text === '# 生成的 Docker Compose 配置将显示在这里') return;
+            navigator.clipboard.writeText(text).then(function () {
+                copyOutputBtn.classList.add('copied'); copyIcon.style.display = 'none'; checkIcon.style.display = ''; copyOutputLabel.textContent = '已复制';
+                setTimeout(function () { copyOutputBtn.classList.remove('copied'); copyIcon.style.display = ''; checkIcon.style.display = 'none'; copyOutputLabel.textContent = '复制'; }, 2000);
+            }).catch(function () { alert('复制失败，请手动选中内容复制'); });
+        });
+
+        function tokenize(str) {
+            var tokens = [], current = '', inD = false, inS = false;
+            for (var idx = 0; idx < str.length; idx++) {
+                var c = str[idx];
+                if (c === '"' && !inS) inD = !inD;
+                else if (c === "'" && !inD) inS = !inS;
+                else if (/\s/.test(c) && !inD && !inS) { if (current) { tokens.push(current); current = ''; } }
+                else current += c;
+            }
+            if (current) tokens.push(current);
+            return tokens;
+        }
+
+        function extractRunCommand(rawInput) {
+            var joined = rawInput.replace(/\\\s*\n/g, ' ');
+            var lines = joined.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+            var runCommand = null, runStartIdx = -1, pullImage = null;
+            for (var idx = 0; idx < lines.length; idx++) {
+                var line = lines[idx];
+                if (line.startsWith('docker run')) { runCommand = line; runStartIdx = idx; }
+                else if (line.startsWith('docker pull')) {
+                    var parts = line.split(/\s+/);
+                    var nonOpt = parts.slice(2).filter(function (p) { return !p.startsWith('-'); });
+                    if (nonOpt.length > 0) pullImage = nonOpt[nonOpt.length - 1];
+                }
+            }
+            if (runCommand !== null && runStartIdx >= 0) {
+                for (var j = runStartIdx + 1; j < lines.length; j++) {
+                    var nextLine = lines[j];
+                    if (nextLine.startsWith('docker ') || nextLine.startsWith('sudo ') || nextLine.startsWith('#')) break;
+                    runCommand += ' ' + nextLine;
+                }
+            }
+            return { runCommand: runCommand, pullImage: pullImage };
+        }
+
+        function cleanShellVars(path) {
+            path = path.replace(/\$\([^)]*\)/g, '');
+            path = path.replace(/\$\{[^}]*\}/g, '');
+            path = path.replace(/\$[A-Za-z_][A-Za-z0-9_]*/g, '');
+            path = path.replace(/`[^`]*`/g, '');
+            path = path.replace(/\/+/g, '/');
+            return path;
+        }
+
+        var SYSTEM_PATHS = ['/var/run/docker.sock', '/run/docker.sock', '/var/run/docker', '/run/docker', '/var/lib/docker', '/usr/bin/docker', '/usr/local/bin/docker', '/proc', '/sys', '/dev', '/boot', '/lib/modules', '/usr/src', '/etc/localtime', '/etc/timezone', '/usr/share/zoneinfo', '/etc/hosts', '/etc/hostname', '/etc/resolv.conf', '/etc/machine-id', '/etc/docker', '/etc/ssl', '/etc/pki', '/etc/ca-certificates', '/usr/share/ca-certificates', '/usr/local/share/ca-certificates', '/etc/passwd', '/etc/group', '/etc/shadow', '/etc/gshadow', '/etc/nsswitch.conf', '/etc/krb5.conf', '/etc/environment', '/tmp/.X11-unix', '/run/dbus', '/var/run/dbus'];
+
+        function isSystemPath(hostPath) {
+            for (var idx = 0; idx < SYSTEM_PATHS.length; idx++) {
+                if (hostPath === SYSTEM_PATHS[idx] || hostPath.startsWith(SYSTEM_PATHS[idx] + '/')) return true;
+            }
+            return false;
+        }
+
+        function resolveVolume(volRaw, prefix) {
+            volRaw = cleanShellVars(volRaw);
+            if (!prefix) {
+                var ci = volRaw.indexOf(':');
+                if (ci === 0) volRaw = '.' + volRaw;
+                if (ci === -1 && !volRaw) return '.';
+                return volRaw;
+            }
+            var ci = volRaw.indexOf(':');
+            if (ci === -1) return prefix + '/' + volRaw;
+            var hostPart = volRaw.slice(0, ci);
+            var containerPart = volRaw.slice(ci);
+            if (isSystemPath(hostPart)) return volRaw;
+            if (hostPart === '.' || hostPart === '~' || hostPart === '/' || hostPart === '') {
+                hostPart = '';
+            } else if (hostPart.startsWith('./')) {
+                hostPart = hostPart.slice(1);
+            } else if (hostPart.startsWith('~/')) {
+                hostPart = hostPart.slice(1);
+            } else if (hostPart.startsWith('../')) {
+                hostPart = hostPart.replace(/^(\.\.\/)+/, '');
+                hostPart = '/' + hostPart;
+            } else if (!hostPart.startsWith('/')) {
+                hostPart = '/' + hostPart;
+            }
+            var result = (prefix.replace(/\/+$/, '') + hostPart + containerPart).replace(/\/+/g, '/');
+            return result;
+        }
+
+        function processComposeYaml(yamlStr) {
+            var rp = volumePrefixEl.value.trim();
+            var lines = yamlStr.split('\n');
+            var result = [];
+            var inServiceVolumes = false;
+            var serviceIndent = -1;
+            var containerName = '';
+            var hasRestart = false;
+            var hasPrivileged = false;
+            for (var i = 0; i < lines.length; i++) {
+                var m = lines[i].match(/^\s*container_name:\s*(.+)/);
+                if (m) containerName = m[1].trim();
+                if (lines[i].match(/^\s*restart:\s*/)) hasRestart = true;
+                if (lines[i].match(/^\s*privileged:\s*/)) hasPrivileged = true;
+            }
+            var finalPrefix = rp ? rp.replace(/\{container_name\}/g, containerName) : '';
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i];
+                var lineIndent = line.match(/^(\s*)/)[1].length;
+                if (line.match(/^\s+volumes:\s*$/) && lineIndent >= 4) {
+                    inServiceVolumes = true;
+                    serviceIndent = lineIndent;
+                    result.push(line);
+                    continue;
+                }
+                if (line.match(/^volumes:\s*$/)) {
+                    inServiceVolumes = false;
+                    result.push(line);
+                    continue;
+                }
+                if (inServiceVolumes) {
+                    var isListItem = line.match(/^\s*-\s+/);
+                    if (!isListItem && line.trim() !== '') {
+                        var currentIndent = line.match(/^(\s*)/)[1].length;
+                        if (currentIndent <= serviceIndent) {
+                            inServiceVolumes = false;
+                        }
+                    }
+                }
+                if (inServiceVolumes && line.match(/^\s*-\s+/)) {
+                    var volMatch = line.match(/^\s*-\s+"?([^"]+)"?\s*$/);
+                    if (volMatch) {
+                        var vol = volMatch[1];
+                        var resolved = resolveVolume(vol, finalPrefix);
+                        line = line.replace(vol, resolved);
+                    }
+                }
+                result.push(line);
+            }
+            var insertIdx = result.length;
+            for (var i = result.length - 1; i >= 0; i--) {
+                if (result[i].trim() !== '') { insertIdx = i + 1; break; }
+            }
+            var indent = '    ';
+            for (var i = 0; i < result.length; i++) {
+                var im = result[i].match(/^(\s+)(image|container_name|restart|ports|volumes|environment):/);
+                if (im) { indent = im[1]; break; }
+            }
+            if (!hasRestart && cbRestart.checked) {
+                result.splice(insertIdx, 0, indent + 'restart: unless-stopped');
+                insertIdx++;
+            }
+            if (!hasPrivileged && cbPrivileged.checked) {
+                result.splice(insertIdx, 0, indent + 'privileged: true');
+            }
+            return result.join('\n');
+        }
+
+        function convertCommand() {
+            var raw = dockerCommandEl.value.trim();
+            if (!raw) { setError('# 错误：请输入 Docker Run 命令或 Docker Compose 配置'); return; }
+            if (raw.includes('services:') || raw.includes('version:')) {
+                try {
+                    var yaml = processComposeYaml(raw);
+                    output.classList.remove('error'); output.classList.add('success'); output.textContent = yaml;
+                } catch (err) { setError('# 错误: ' + err.message); }
+            } else {
+                var result = extractRunCommand(raw);
+                if (!result.runCommand) { setError('# 错误：未找到 Docker Run 命令，请确保输入中包含以 "docker run" 开头的命令'); return; }
+                try {
+                    var yaml = parseDockerCommand(result.runCommand, result.pullImage);
+                    output.classList.remove('error'); output.classList.add('success'); output.textContent = yaml;
+                } catch (err) { setError('# 错误: ' + err.message); }
+            }
+        }
+
+        function setError(msg) { output.classList.remove('success'); output.classList.add('error'); output.textContent = msg; }
+
+        function parseDockerCommand(command, pullImage) {
+            var args = command.replace(/^docker run\s*/, '');
+            var tokens = tokenize(args);
+            var BUILTIN = { host: 1, bridge: 1, none: 1 };
+            var BOOLS = { '--rm':1, '--init':1, '--tty':1, '-t':1, '-i':1, '-it':1, '--no-healthcheck':1, '--oom-kill-disable':1, '--read-only':1, '--sig-proxy':1 };
+            var svc = { image: '', container_name: '', hostname: '', working_dir: '', ports: [], volumes: [], environment: [], networks: [], labels: [], logging: { driver: '', options: {} }, restart: '', privileged: false, command: '' };
+            var restCLI = false, privCLI = false;
+            var topVol = {}, topNet = {};
+            var i = 0;
+            while (i < tokens.length) {
+                var t = tokens[i];
+                if (t === '\\') { i++; continue; }
+                var o = t, ve = null;
+                if (t.startsWith('-') && t.includes('=')) { var eq = t.indexOf('='); o = t.slice(0, eq); ve = t.slice(eq + 1); }
+                if (o === '-d' || o === '--detach') { i++; continue; }
+                if (BOOLS[o]) { i++; continue; }
+                if (o === '--name') { svc.container_name = ve !== null ? ve : tokens[i+1]; i += ve !== null ? 1 : 2; continue; }
+                if (o === '--hostname' || o === '-h') { svc.hostname = ve !== null ? ve : tokens[i+1]; i += ve !== null ? 1 : 2; continue; }
+                if (o === '-p' || o === '--publish') { svc.ports.push(ve !== null ? ve : tokens[i+1]); i += ve !== null ? 1 : 2; continue; }
+                if (o === '--workdir' || o === '-w') { svc.working_dir = ve !== null ? ve : tokens[i+1]; i += ve !== null ? 1 : 2; continue; }
+                if (o === '-v' || o === '--volume') { svc.volumes.push(ve !== null ? ve : tokens[i+1]); i += ve !== null ? 1 : 2; continue; }
+                if (o === '-e' || o === '--env') { svc.environment.push(ve !== null ? ve : tokens[i+1]); i += ve !== null ? 1 : 2; continue; }
+                if (o === '--restart') { svc.restart = ve !== null ? ve : tokens[i+1]; restCLI = true; i += ve !== null ? 1 : 2; continue; }
+                if (o === '--privileged') { svc.privileged = true; privCLI = true; i++; continue; }
+                if (o === '--label' || o === '-l') { svc.labels.push(ve !== null ? ve : tokens[i+1]); i += ve !== null ? 1 : 2; continue; }
+                if (o === '--log-driver') { svc.logging.driver = ve !== null ? ve : tokens[i+1]; i += ve !== null ? 1 : 2; continue; }
+                if (o === '--log-opt') { var r = ve !== null ? ve : tokens[i+1]; var ep = r.indexOf('='); var k = ep >= 0 ? r.slice(0, ep) : r; var v = ep >= 0 ? r.slice(ep + 1) : ''; if (k) svc.logging.options[k] = v; i += ve !== null ? 1 : 2; continue; }
+                if (o === '--network' || o === '--net') { var n = ve !== null ? ve : tokens[i+1]; svc.networks.push(n); if (!BUILTIN[n] && !topNet[n]) topNet[n] = { external: true }; i += ve !== null ? 1 : 2; continue; }
+                if (!t.startsWith('-')) { if (!svc.image) svc.image = t; else { var cmd = tokens.slice(i).join(' '); if (cmd) svc.command = '"' + cmd + '"'; break; } i++; continue; }
+                if (o.startsWith('-')) { i += ve !== null ? 1 : 2; continue; }
+                i++;
+            }
+            if (!svc.image && pullImage) svc.image = pullImage;
+            var finalName;
+            if (svc.container_name) finalName = svc.container_name;
+            else if (svc.image) finalName = svc.image.split('/').pop().split(':')[0] || 'my-service';
+            else finalName = 'my-service';
+            finalName = finalName.replace(/[^a-zA-Z0-9_-]/g, '-');
+            var rp = volumePrefixEl.value.trim();
+            var vp = rp ? rp.replace(/\{container_name\}/g, finalName) : '';
+            if (!restCLI) svc.restart = cbRestart.checked ? 'unless-stopped' : '';
+            if (!privCLI) svc.privileged = cbPrivileged.checked;
+            var rv = svc.volumes.map(function (vol) {
+                var res = resolveVolume(vol, vp);
+                if (!vp) {
+                    var cleaned = cleanShellVars(vol);
+                    var hp = cleaned.includes(':') ? cleaned.split(':')[0] : cleaned;
+                    if (hp && /^[a-zA-Z0-9_-]+$/.test(hp)) {
+                        if (!topVol[hp]) topVol[hp] = {};
+                    }
+                }
+                return res;
+            });
+            var y = "services:\n  " + finalName + ":\n    image: " + svc.image + "\n";
+            if (svc.container_name) y += "    container_name: " + svc.container_name + "\n";
+            if (svc.hostname) y += "    hostname: " + svc.hostname + "\n";
+            if (svc.working_dir) y += "    working_dir: " + svc.working_dir + "\n";
+            if (svc.ports.length) { y += "    ports:\n"; svc.ports.forEach(function (p) { y += '      - "' + p + '"\n'; }); }
+            if (rv.length) { y += "    volumes:\n"; rv.forEach(function (v) { y += '      - "' + v + '"\n'; }); }
+            if (svc.environment.length) { y += "    environment:\n"; svc.environment.forEach(function (e) { y += '      - "' + e + '"\n'; }); }
+            if (svc.labels.length) { y += "    labels:\n"; svc.labels.forEach(function (l) { y += '      - "' + l + '"\n'; }); }
+            var hd = !!svc.logging.driver, ho = Object.keys(svc.logging.options).length > 0;
+            if (hd || ho) {
+                y += "    logging:\n";
+                if (hd) y += "      driver: " + svc.logging.driver + "\n";
+                if (ho) { y += "      options:\n"; for (var lk in svc.logging.options) y += '        ' + lk + ': "' + svc.logging.options[lk] + '"\n'; }
+            }
+            if (svc.networks.length) { y += "    networks:\n"; svc.networks.forEach(function (nn) { y += "      - " + nn + "\n"; }); }
+            if (svc.restart) y += "    restart: " + svc.restart + "\n";
+            if (svc.privileged) y += "    privileged: true\n";
+            if (svc.command) y += "    command: " + svc.command + "\n";
+            if (!vp && Object.keys(topVol).length) { y += "\nvolumes:\n"; for (var vn in topVol) y += "  " + vn + ":\n"; }
+            if (Object.keys(topNet).length) { y += "\nnetworks:\n"; for (var nn in topNet) { y += "  " + nn + ":\n"; if (topNet[nn].external) y += "    external: true\n"; } }
+            return y;
+        }
+    }
+})();
+</script>
+</body>
+</html>
