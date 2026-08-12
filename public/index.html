@@ -159,9 +159,9 @@
             <div class="panel-header">
                 <h2>🚀 一键部署命令</h2>
                 <button class="copy-output-btn" id="copyDeployBtn" title="复制部署命令">
-                    <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span class="copy-label">复制</span>
+                    <svg id="copyDeployIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <svg id="checkDeployIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span id="copyDeployLabel">复制</span>
                 </button>
             </div>
             <div class="output" id="deployOutput">粘贴到终端执行，自动完成目录创建、文件生成、容器启动</div>
@@ -171,9 +171,9 @@
             <div class="panel-header">
                 <h2>📄 compose.yaml 内容</h2>
                 <button class="copy-output-btn" id="copyYamlBtn" title="复制 YAML 内容">
-                    <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span class="copy-label">复制</span>
+                    <svg id="copyYamlIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <svg id="checkYamlIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span id="copyYamlLabel">复制</span>
                 </button>
             </div>
             <div class="output" id="yamlOutput">纯 compose.yaml 配置内容，适合手动编辑或集成到其他工具</div>
@@ -199,6 +199,18 @@
         var modalVolumePrefix = document.getElementById('modalVolumePrefix');
         var saveSettings = document.getElementById('saveSettings');
         var resetDefault = document.getElementById('resetDefault');
+
+        // 复制按钮 - 部署命令
+        var copyDeployBtn = document.getElementById('copyDeployBtn');
+        var copyDeployLabel = document.getElementById('copyDeployLabel');
+        var copyDeployIcon = document.getElementById('copyDeployIcon');
+        var checkDeployIcon = document.getElementById('checkDeployIcon');
+
+        // 复制按钮 - YAML
+        var copyYamlBtn = document.getElementById('copyYamlBtn');
+        var copyYamlLabel = document.getElementById('copyYamlLabel');
+        var copyYamlIcon = document.getElementById('copyYamlIcon');
+        var checkYamlIcon = document.getElementById('checkYamlIcon');
 
         var userCustomPath = localStorage.getItem('volumePrefix');
         var fallback = '/opt/docker/{container_name}';
@@ -249,55 +261,41 @@
             }
         });
 
-        function setupCopyButton(btnId, outputId) {
-            var btn = document.getElementById(btnId);
-            if (!btn) return;
-            
-            var outputEl = document.getElementById(outputId);
-            if (!outputEl) return;
-            
-            btn.addEventListener('click', function () {
-                var text = outputEl.textContent;
-                var defaultTexts = [
-                    '粘贴到终端执行，自动完成目录创建、文件生成、容器启动',
-                    '纯 compose.yaml 配置内容，适合手动编辑或集成到其他工具'
-                ];
-                if (!text || defaultTexts.indexOf(text) !== -1) return;
-                
-                var copyIcon = btn.querySelector('.copy-icon');
-                var checkIcon = btn.querySelector('.check-icon');
-                var copyLabel = btn.querySelector('.copy-label');
-                
-                if (!copyIcon || !checkIcon || !copyLabel) {
-                    navigator.clipboard.writeText(text).then(function () {
-                        var oldText = btn.textContent;
-                        btn.textContent = '已复制';
-                        btn.classList.add('copied');
-                        setTimeout(function () {
-                            btn.textContent = oldText;
-                            btn.classList.remove('copied');
-                        }, 2000);
-                    }).catch(function () { alert('复制失败，请手动选中内容复制'); });
-                    return;
-                }
-                
-                navigator.clipboard.writeText(text).then(function () {
-                    btn.classList.add('copied');
-                    copyIcon.style.display = 'none';
-                    checkIcon.style.display = '';
-                    copyLabel.textContent = '已复制';
-                    setTimeout(function () {
-                        btn.classList.remove('copied');
-                        copyIcon.style.display = '';
-                        checkIcon.style.display = 'none';
-                        copyLabel.textContent = '复制';
-                    }, 2000);
-                }).catch(function () { alert('复制失败，请手动选中内容复制'); });
-            });
-        }
+        // 复制按钮 - 部署命令
+        copyDeployBtn.addEventListener('click', function () {
+            var text = deployOutput.textContent;
+            if (!text || text === '粘贴到终端执行，自动完成目录创建、文件生成、容器启动') return;
+            navigator.clipboard.writeText(text).then(function () {
+                copyDeployBtn.classList.add('copied');
+                copyDeployIcon.style.display = 'none';
+                checkDeployIcon.style.display = '';
+                copyDeployLabel.textContent = '已复制';
+                setTimeout(function () {
+                    copyDeployBtn.classList.remove('copied');
+                    copyDeployIcon.style.display = '';
+                    checkDeployIcon.style.display = 'none';
+                    copyDeployLabel.textContent = '复制';
+                }, 2000);
+            }).catch(function () { alert('复制失败，请手动选中内容复制'); });
+        });
 
-        setupCopyButton('copyDeployBtn', 'deployOutput');
-        setupCopyButton('copyYamlBtn', 'yamlOutput');
+        // 复制按钮 - YAML
+        copyYamlBtn.addEventListener('click', function () {
+            var text = yamlOutput.textContent;
+            if (!text || text === '纯 compose.yaml 配置内容，适合手动编辑或集成到其他工具') return;
+            navigator.clipboard.writeText(text).then(function () {
+                copyYamlBtn.classList.add('copied');
+                copyYamlIcon.style.display = 'none';
+                checkYamlIcon.style.display = '';
+                copyYamlLabel.textContent = '已复制';
+                setTimeout(function () {
+                    copyYamlBtn.classList.remove('copied');
+                    copyYamlIcon.style.display = '';
+                    checkYamlIcon.style.display = 'none';
+                    copyYamlLabel.textContent = '复制';
+                }, 2000);
+            }).catch(function () { alert('复制失败，请手动选中内容复制'); });
+        });
 
         convertBtn.addEventListener('click', convertCommand);
 
