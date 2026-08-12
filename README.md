@@ -104,7 +104,7 @@ EOF
 docker compose up -d
 ```
 
-访问：`http://服务器IP:6688`
+### 访问：`http://服务器IP:6688`
 
 **常用管理命令**
 
