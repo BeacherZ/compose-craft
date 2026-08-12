@@ -1,7 +1,7 @@
 services:
   compose-craft:
-    image: ghcr.io/BeacherZ/compose-craft:latest
-    container_name: compose-craft
+    image: ghcr.io/beacherz/compose-tool:latest
+    ghcr.io/beacherz/container_name: compose-toolcompose-tool:latest
     restart: unless-stopped
     ports:
       - "8765:80"
