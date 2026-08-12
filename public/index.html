@@ -186,7 +186,7 @@
         var resetDefault = document.getElementById('resetDefault');
 
         var userCustomPath = localStorage.getItem('volumePrefix');
-        var fallback = '/home/dpanel/compose/{container_name}';
+        var fallback = '/opt/docker/{container_name}';
 
         if (userCustomPath) {
             volumePrefixEl.value = userCustomPath;
