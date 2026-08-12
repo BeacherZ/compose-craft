@@ -251,18 +251,35 @@
 
         function setupCopyButton(btnId, outputId) {
             var btn = document.getElementById(btnId);
+            if (!btn) return;
+            
             var outputEl = document.getElementById(outputId);
+            if (!outputEl) return;
+            
             btn.addEventListener('click', function () {
                 var text = outputEl.textContent;
                 var defaultTexts = [
                     '粘贴到终端执行，自动完成目录创建、文件生成、容器启动',
                     '纯 compose.yaml 配置内容，适合手动编辑或集成到其他工具'
                 ];
-                if (!text || defaultTexts.includes(text)) return;
+                if (!text || defaultTexts.indexOf(text) !== -1) return;
                 
                 var copyIcon = btn.querySelector('.copy-icon');
                 var checkIcon = btn.querySelector('.check-icon');
                 var copyLabel = btn.querySelector('.copy-label');
+                
+                if (!copyIcon || !checkIcon || !copyLabel) {
+                    navigator.clipboard.writeText(text).then(function () {
+                        var oldText = btn.textContent;
+                        btn.textContent = '已复制';
+                        btn.classList.add('copied');
+                        setTimeout(function () {
+                            btn.textContent = oldText;
+                            btn.classList.remove('copied');
+                        }, 2000);
+                    }).catch(function () { alert('复制失败，请手动选中内容复制'); });
+                    return;
+                }
                 
                 navigator.clipboard.writeText(text).then(function () {
                     btn.classList.add('copied');
