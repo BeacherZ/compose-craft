@@ -342,6 +342,7 @@
             var hostPart = volRaw.slice(0, ci);
             var containerPart = volRaw.slice(ci);
             if (isSystemPath(hostPart)) return volRaw;
+            if (!/\//.test(hostPart) && /^[a-zA-Z0-9_-]+$/.test(hostPart)) return volRaw;
             if (hostPart === '.' || hostPart === '~' || hostPart === '/' || hostPart === '') {
                 hostPart = '';
             } else if (hostPart.startsWith('./')) {
@@ -350,7 +351,13 @@
                 hostPart = hostPart.slice(1);
             } else if (hostPart.startsWith('../')) {
                 hostPart = hostPart.replace(/^(\.\.\/)+/, '');hostPart = '/' + hostPart;
-            } else if (!hostPart.startsWith('/')) {
+            } else if (hostPart.startsWith('/')) {
+                var cleanAbs = hostPart.replace(/\/+$/, '');
+                if (cleanAbs === '' || cleanAbs === '/') return volRaw;
+                var absSegs = cleanAbs.split('/').filter(function (s) { return s.length > 0; });
+                if (absSegs.length === 0) return volRaw;
+                hostPart = '/' + absSegs[absSegs.length - 1];
+            } else {
                 hostPart = '/' + hostPart;
             }
             var result = (prefix.replace(/\/+$/, '') + hostPart + containerPart).replace(/\/+/g, '/');
@@ -398,7 +405,7 @@
                 }
                 if (inServiceVolumes && line.match(/^\s*-\s+/)) {
                     var volMatch = line.match(/^\s*-\s+"?([^"]+)"?\s*$/);
-                    if (volMatch) { var vol = volMatch[1]; var resolved = resolveVolume(vol, finalPrefix); line = line.replace(vol, resolved); }
+                    if (volMatch && !/^(type|source|target|bind|volume|tmpfs|read_only|consistency)\s*:/.test(volMatch[1])) { var vol = volMatch[1]; var resolved = resolveVolume(vol, finalPrefix); line = line.replace(vol, resolved); }
                 }
                 result.push(line);
             }
