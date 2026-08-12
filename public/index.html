@@ -113,7 +113,7 @@
             </div>
             <div class="modal-body">
                 <label for="modalVolumePrefix">默认卷映射绝对路径</label>
-                <input type="text" id="modalVolumePrefix" placeholder="/home/dpanel/compose/{container_name}">
+                <input type="text" id="modalVolumePrefix" placeholder="/opt/docker/{container_name}">
                 <div class="hint">
                     · <code>{container_name}</code> 会自动替换为实际容器名<br>
                     · 此设置永久保存到本地浏览器，下次访问自动生效<br>
@@ -392,7 +392,21 @@
             if (!hasPrivileged && cbPrivileged.checked) {
                 result.splice(insertIdx, 0, indent + 'privileged: true');
             }
-            return result.join('\n');
+
+            var yaml = result.join('\n');
+            var deployContainerName = containerName || 'my-service';
+            var deployCommand = 
+"# 一键部署命令（复制下面整段到终端执行）\n" +
+"mkdir -p /opt/docker/" + deployContainerName + " && cd /opt/docker/" + deployContainerName + " && \\\n" +
+"cat > compose.yaml << 'EOF'\n" +
+yaml +
+"\nEOF\n" +
+"docker compose up -d\n\n" +
+"# ═══════════════════════════════════════\n" +
+"# 如果只需要 compose.yaml 内容，复制下方：\n" +
+"# ═══════════════════════════════════════\n\n" +
+yaml;
+            return deployCommand;
         }
 
         function convertCommand() {
@@ -488,7 +502,7 @@
             if (svc.command) y += "    command: " + svc.command + "\n";
             if (!vp && Object.keys(topVol).length) { y += "\nvolumes:\n"; for (var vn in topVol) y += "  " + vn + ":\n"; }
             if (Object.keys(topNet).length) { y += "\nnetworks:\n"; for (var nn in topNet) { y += "  " + nn + ":\n"; if (topNet[nn].external) y += "    external: true\n"; } }
-            // 生成完整的一键部署命令
+            
             var deployCommand = 
 "# 一键部署命令（复制下面整段到终端执行）\n" +
 "mkdir -p /opt/docker/" + finalName + " && cd /opt/docker/" + finalName + " && \\\n" +
