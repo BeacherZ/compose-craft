@@ -431,9 +431,22 @@ ports:
   - "你的端口:80"
 ```
 
-### 修改默认路径
+### 修改默认卷映射路径
 
-首次访问后可随时点击右上角 ⚙️ **设置** 按钮修改，设置保存在浏览器本地（localStorage）。
+编辑服务器上的 `compose.yaml`，修改 `VOLUME_PREFIX` 环境变量：
+
+```yaml
+- VOLUME_PREFIX=/你的新路径/{container_name}
+```
+
+然后重启容器：
+
+```bash
+docker compose up -d --force-recreate
+```
+
+所有设备、所有浏览器访问都会使用新的默认路径，无需重新构建镜像。
+
 
 ### 更新到最新版本
 
