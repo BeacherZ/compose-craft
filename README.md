@@ -10,6 +10,12 @@
 
 ---
 
+## 🖼️ 界面预览
+
+![主界面](https://raw.githubusercontent.com/BeacherZ/compose-tool/main/main.png)
+
+---
+
 ## 🏗️ 核心哲学：图纸与材料同屋存放
 
 ### 问题
