@@ -488,7 +488,19 @@
             if (svc.command) y += "    command: " + svc.command + "\n";
             if (!vp && Object.keys(topVol).length) { y += "\nvolumes:\n"; for (var vn in topVol) y += "  " + vn + ":\n"; }
             if (Object.keys(topNet).length) { y += "\nnetworks:\n"; for (var nn in topNet) { y += "  " + nn + ":\n"; if (topNet[nn].external) y += "    external: true\n"; } }
-            return y;
+            // 生成完整的一键部署命令
+            var deployCommand = 
+"# 一键部署命令（复制下面整段到终端执行）\n" +
+"mkdir -p /opt/docker/" + finalName + " && cd /opt/docker/" + finalName + " && \\\n" +
+"cat > compose.yaml << 'EOF'\n" +
+y +
+"EOF\n" +
+"docker compose up -d\n\n" +
+"# ═══════════════════════════════════════\n" +
+"# 如果只需要 compose.yaml 内容，复制下方：\n" +
+"# ═══════════════════════════════════════\n\n" +
+y;
+            return deployCommand;
         }
     }
 })();
