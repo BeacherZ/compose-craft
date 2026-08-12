@@ -46,8 +46,8 @@ docker run -d \
 **第 1 步：创建项目目录**
 
 ```bash
-mkdir -p /home/dpanel/compose/compose-craft
-cd /home/dpanel/compose/compose-craft
+mkdir -p /opt/docker/compose-craft
+cd /opt/docker/compose-craft
 ```
 
 **第 2 步：创建 compose.yaml**
@@ -78,7 +78,7 @@ EOF
 docker compose up -d
 ```
 
-> ✅ **符合"图纸与材料同屋"理念**：配置文件存放在 `/home/dpanel/compose/compose-craft/compose.yaml`，虽然本项目无数据卷需求，但目录结构统一，方便管理。
+> ✅ **符合"图纸与材料同屋"理念**：配置文件存放在 `/opt/docker/compose-craft/compose.yaml`，虽然本项目无数据卷需求，但目录结构统一，方便管理。
 
 **常用命令**
 
@@ -98,7 +98,7 @@ docker compose down       # 停止服务
 打开网页后会自动弹出设置窗口，配置你的默认卷映射路径，例如：
 
 ```
-/home/dpanel/compose/{container_name}
+/opt/docker/{container_name}
 ```
 
 `{container_name}` 会自动替换为实际容器名，保存后永久生效。
@@ -144,8 +144,8 @@ services:
 
 ```bash
 # 创建项目目录
-mkdir -p /home/dpanel/compose/vaultwarden
-cd /home/dpanel/compose/vaultwarden
+mkdir -p /opt/docker/vaultwarden
+cd /opt/docker/vaultwarden
 
 # 保存配置
 vim compose.yaml  # 粘贴转换结果
@@ -180,7 +180,7 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - "/home/dpanel/compose/vaultwarden/vw-data:/data"
+      - "/opt/docker/vaultwarden/vw-data:/data"
     environment:
       - "DOMAIN=https://vw.example.com"
     restart: unless-stopped
@@ -217,7 +217,7 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - "/home/dpanel/compose/vaultwarden/vw-data:/data"
+      - "/opt/docker/vaultwarden/vw-data:/data"
     restart: unless-stopped
 ```
 
@@ -249,7 +249,7 @@ services:
     container_name: portainer
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "/home/dpanel/compose/portainer/portainer-data:/data"
+      - "/opt/docker/portainer/portainer-data:/data"
     restart: unless-stopped
 ```
 
@@ -265,19 +265,19 @@ services:
 
 ```bash
 # 虽然本项目无数据卷，但可以备份配置文件方便恢复
-tar -czf compose-craft-backup.tar.gz /home/dpanel/compose/compose-craft
+tar -czf compose-craft-backup.tar.gz /opt/docker/compose-craft
 ```
 
 ### 备份单个项目
 
 ```bash
-tar -czf vaultwarden-backup.tar.gz /home/dpanel/compose/vaultwarden
+tar -czf vaultwarden-backup.tar.gz /opt/docker/vaultwarden
 ```
 
 ### 备份所有项目
 
 ```bash
-tar -czf docker-all-backup.tar.gz /home/dpanel/compose
+tar -czf docker-all-backup.tar.gz /opt/docker
 ```
 
 ### 迁移到新服务器
@@ -290,7 +290,7 @@ curl -fsSL https://get.docker.com | sh
 tar -xzf docker-all-backup.tar.gz -C /
 
 # 3. 批量启动所有容器
-for dir in /home/dpanel/compose/*/; do
+for dir in /opt/docker/*/; do
   (cd "$dir" && docker compose up -d)
 done
 ```
@@ -360,7 +360,7 @@ ports:
 ### 更新到最新版本
 
 ```bash
-cd /home/dpanel/compose/compose-craft
+cd /opt/docker/compose-craft
 docker compose pull
 docker compose up -d
 ```
@@ -411,4 +411,3 @@ git push origin feature/amazing-feature
 <p align="center">
   <sub>Made with ❤️ for Docker enthusiasts</sub>
 </p>
-
