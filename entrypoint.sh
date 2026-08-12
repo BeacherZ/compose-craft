@@ -1,4 +1,4 @@
 #!/bin/sh
 VOLUME_PREFIX="${VOLUME_PREFIX:-/opt/docker/{container_name}}"
-sed -i "s#__VOLUME_PREFIX__#${VOLUME_PREFIX}#g" /usr/share/nginx/html/index.html
+echo "window.VOLUME_PREFIX = '${VOLUME_PREFIX}';" > /usr/share/nginx/html/config.js
 nginx -g 'daemon off;'
