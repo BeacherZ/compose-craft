@@ -28,14 +28,14 @@
 本工具的目标是把所有 Docker 项目的"图纸"（compose.yaml 配置文件）和"材料"（映射的数据目录）统一存放在一起：
 
 ```
-/opt/docker/← 统一大目录
+/opt/docker/                        ← 统一大目录
 ├── vaultwarden/                    ← 每个容器一个子目录
 │   ├── compose.yaml                ← 图纸（配置文件）
 │   └── vw-data/                    ← 材料（容器数据）
 ├── portainer/
 │   ├── compose.yaml
 │   └── portainer-data/
-├── compose-tool/                  ← 本项目自身也遵循此规范
+├── compose-tool/                   ← 本项目自身也遵循此规范
 │   └── compose.yaml                ← 本项目无数据卷，只有配置文件
 └── nextcloud/
     ├── compose.yaml
@@ -79,22 +79,14 @@ docker run -d \
 
 访问：`http://服务器IP:8765`
 
->💡 本工具是纯静态网页，无数据持久化需求，无需挂载卷。
+> 💡 本工具是纯静态网页，无数据持久化需求，无需挂载卷。
 
 ---
 
 ### 方式二：Docker Compose（推荐，符合本工具理念）
 
-**第1 步：创建项目目录**
-
 ```bash
-mkdir -p /opt/docker/compose-tool
-cd /opt/docker/compose-tool
-```
-
-**第 2 步：创建 compose.yaml**
-
-```bash
+mkdir -p /opt/docker/compose-tool && cd /opt/docker/compose-tool && \
 cat > compose.yaml << 'EOF'
 services:
   compose-tool:
@@ -112,23 +104,19 @@ services:
       retries: 3
       start_period: 5s
 EOF
-```
-
-**第 3 步：启动服务**
-
-```bash
 docker compose up -d
 ```
 
 访问：`http://服务器IP:8765`
 
-**常用命令**
+**常用管理命令**
 
 ```bash
-docker compose logs -f    # 查看运行日志
-docker compose pull       # 拉取最新镜像
-docker compose up -d      # 重新部署（更新后执行）
-docker compose down       # 停止并删除容器
+cd /opt/docker/compose-tool      # 进入项目目录
+docker compose logs -f            # 查看运行日志
+docker compose pull               # 拉取最新镜像
+docker compose up -d              # 重新部署（更新后执行）
+docker compose down               # 停止并删除容器
 ```
 
 ---
@@ -145,9 +133,9 @@ docker compose down       # 停止并删除容器
 
 `{container_name}` 会自动替换为实际容器名，保存后永久生效，下次访问无需重新配置。
 
-**第 2 步：粘贴 Docker Run 命令或Compose 配置**
+**第 2 步：粘贴 Docker Run 命令或 Compose 配置**
 
-直接从官方文档或GitHub 复制命令粘贴进去即可。
+直接从官方文档或 GitHub 复制命令粘贴进去即可。
 
 **第 3 步：点击"转换配置"**
 
@@ -160,16 +148,11 @@ docker compose down       # 停止并删除容器
 **第 4 步：复制并部署**
 
 ```bash
-# 创建项目目录
-mkdir -p /opt/docker/容器名
-cd /opt/docker/容器名
-
-# 粘贴转换结果并保存
-vim compose.yaml
-
-# 启动服务
-docker compose up -d
+mkdir -p /opt/docker/容器名 && cd /opt/docker/容器名 && \
+vim compose.yaml && docker compose up -d
 ```
+
+> 💡 执行 `vim compose.yaml` 后，按 `i` 进入编辑模式，粘贴转换结果，按 `Esc` 退出编辑模式，输入 `:wq` 保存并退出。
 
 ---
 
@@ -205,7 +188,7 @@ services:
 
 ---
 
-### 示例 2：官方 Compose →标准化路径
+### 示例 2：官方 Compose → 标准化路径
 
 **输入**
 
@@ -272,13 +255,13 @@ services:
 
 ### 备份单个项目
 
-以下命令将`vaultwarden` 项目打包为压缩包，保存在当前用户的家目录（`/root/`）：
+以下命令将 `vaultwarden` 项目打包为压缩包，保存在当前用户的家目录（`/root/`）：
 
 ```bash
 tar -czf /root/vaultwarden-backup.tar.gz /opt/docker/vaultwarden
 ```
 
-执行后，压缩包位置：`/root/vaultwarden-backup.tar.gz`
+**执行后压缩包位置**：`/root/vaultwarden-backup.tar.gz`
 
 ---
 
@@ -288,7 +271,7 @@ tar -czf /root/vaultwarden-backup.tar.gz /opt/docker/vaultwarden
 tar -czf /root/docker-all-backup.tar.gz /opt/docker
 ```
 
-执行后，压缩包位置：`/root/docker-all-backup.tar.gz`
+**执行后压缩包位置**：`/root/docker-all-backup.tar.gz`
 
 ---
 
@@ -298,15 +281,19 @@ tar -czf /root/docker-all-backup.tar.gz /opt/docker
 
 ```bash
 # 下载单个项目备份
-scp root@你的服务器IP:/root/vaultwarden-backup.tar.gz ./
+scp root@你的服务器IP:/root/vaultwarden-backup.tar.gz ~/Downloads/
 
 # 下载全部项目备份
-scp root@你的服务器IP:/root/docker-all-backup.tar.gz ./
+scp root@你的服务器IP:/root/docker-all-backup.tar.gz ~/Downloads/
 ```
 
 **方法二：使用 FTP 工具（推荐新手）**
 
-使用 [FileZilla](https://filezilla-project.org/) 或 [WinSCP](https://winscp.net/) 连接服务器，进入 `/root/` 目录，下载对应的 `.tar.gz` 文件到本地电脑。
+1. 下载 [FileZilla](https://filezilla-project.org/) 或 [WinSCP](https://winscp.net/)
+2. 连接到服务器（填写 IP、用户名 root、密码）
+3. 进入右侧 `/root/` 目录
+4. 找到 `.tar.gz` 压缩包
+5. 右键 → 下载到本地电脑
 
 ---
 
@@ -323,13 +310,14 @@ curl -fsSL https://get.docker.com | sh
 **方法一：使用 scp 命令（在本地电脑终端执行）**
 
 ```bash
-# 上传到新服务器的 /root/ 目录
-scp docker-all-backup.tar.gz root@新服务器IP:/root/
+# 从本地电脑上传到新服务器的 /root/ 目录
+scp ~/Downloads/docker-all-backup.tar.gz root@新服务器IP:/root/
 ```
 
 **方法二：使用 FTP 工具**
 
-用 FileZilla 或 WinSCP 连接新服务器，将压缩包上传到新服务器的 `/root/` 目录。
+1. 用 FileZilla 或 WinSCP 连接新服务器
+2. 将本地电脑的压缩包拖拽到新服务器的 `/root/` 目录
 
 **第 3 步：在新服务器上解压**
 
@@ -338,7 +326,7 @@ scp docker-all-backup.tar.gz root@新服务器IP:/root/
 tar -xzf /root/docker-all-backup.tar.gz -C /
 ```
 
-解压后目录结构自动恢复：
+**解压后自动恢复目录结构**：
 
 ```
 /opt/docker/
@@ -348,6 +336,8 @@ tar -xzf /root/docker-all-backup.tar.gz -C /
 ├── portainer/
 │   ├── compose.yaml
 │   └── portainer-data/
+├── compose-tool/
+│   └── compose.yaml
 └── ...
 ```
 
@@ -355,9 +345,25 @@ tar -xzf /root/docker-all-backup.tar.gz -C /
 
 ```bash
 for dir in /opt/docker/*/; do
-  echo "启动 $dir ..."
+  echo "正在启动: $dir"
   (cd "$dir" && docker compose up -d)
 done
+```
+
+**执行后会看到类似输出**：
+
+```
+正在启动: /opt/docker/vaultwarden/
+[+] Running 1/1
+ ✔ Container vaultwarden  Started
+
+正在启动: /opt/docker/portainer/
+[+] Running 1/1
+ ✔ Container portainer  Started
+
+正在启动: /opt/docker/compose-tool/
+[+] Running 1/1
+ ✔ Container compose-tool  Started
 ```
 
 ---
@@ -371,8 +377,7 @@ done
 tar -xzf /root/vaultwarden-backup.tar.gz -C /
 
 # 进入目录启动
-cd /opt/docker/vaultwarden
-docker compose up -d
+cd /opt/docker/vaultwarden && docker compose up -d
 ```
 
 ---
@@ -391,7 +396,7 @@ docker compose up -d
 
 ---
 
-##📋 支持的 Docker Run 参数
+## 📋 支持的 Docker Run 参数
 
 | 参数 | 支持 | 说明 |
 |---|:---:|---|
@@ -433,9 +438,7 @@ ports:
 ### 更新到最新版本
 
 ```bash
-cd /opt/docker/compose-tool
-docker compose pull
-docker compose up -d
+cd /opt/docker/compose-tool && docker compose pull && docker compose up -d
 ```
 
 ---
