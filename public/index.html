@@ -287,12 +287,22 @@
         function fallbackCopy(text, onSuccess) {
             var ta = document.createElement('textarea');
             ta.value = text;
+            ta.setAttribute('readonly', '');
             ta.style.position = 'fixed';
             ta.style.left = '-9999px';
             ta.style.top = '-9999px';
             document.body.appendChild(ta);
-            ta.focus();
-            ta.select();
+            if (navigator.userAgent.match(/ipad|ipod|iphone/i)) {
+                var range = document.createRange();
+                range.selectNodeContents(ta);
+                var selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                ta.setSelectionRange(0, 999999);
+            } else {
+                ta.focus();
+                ta.select();
+            }
             try {
                 var ok = document.execCommand('copy');
                 if (ok) onSuccess();
