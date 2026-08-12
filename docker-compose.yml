@@ -4,9 +4,10 @@ services:
     container_name: compose-tool
     restart: unless-stopped
     ports:
-      - "6688:80"
+      - "6688:80"  # 左边可改为你想要的端口
     environment:
-      - TZ=Asia/Shanghai
+      - TZ=Asia/Shanghai  # 时区
+      - VOLUME_PREFIX=/opt/docker/{container_name}  # 默认卷映射路径，{container_name} 会自动替换为容器名
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
