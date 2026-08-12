@@ -79,7 +79,7 @@ docker run -d \
   ghcr.io/beacherz/compose-tool:latest
 ```
 
-### 方式二：Docker Compose（推荐）
+### 方式二：Docker Compose（推荐，符合本工具理念）
 
 ```bash
 mkdir -p /opt/docker/compose-tool && cd /opt/docker/compose-tool && \
@@ -105,6 +105,16 @@ docker compose up -d
 ```
 
 访问：`http://服务器IP:6688`
+
+**常用管理命令**
+
+```bash
+cd /opt/docker/compose-tool      # 进入项目目录
+docker compose logs -f            # 查看运行日志
+docker compose pull               # 拉取最新镜像
+docker compose up -d              # 重新部署（更新后执行）
+docker compose down               # 停止并删除容器
+```
 
 > 💡 本工具是纯静态网页，无数据持久化需求，无需挂载卷。
 
@@ -152,7 +162,40 @@ EOF
 docker compose up -d
 ```
 
-### 示例 2：系统路径自动保留
+---
+
+### 示例 2：官方 Compose → 标准化路径
+
+**输入**
+```yaml
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    volumes:
+      - ./vw-data:/data
+    ports:
+      - 8000:80
+```
+
+**输出**
+```bash
+mkdir -p /opt/docker/vaultwarden && cd /opt/docker/vaultwarden && \
+cat > compose.yaml << 'EOF'
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    volumes:
+      - "/opt/docker/vaultwarden/vw-data:/data"
+    ports:
+      - "8000:80"
+    restart: unless-stopped
+EOF
+docker compose up -d
+```
+
+---
+
+### 示例 3：系统路径自动保留
 
 **输入**
 ```bash
@@ -190,43 +233,37 @@ docker compose up -d
 ```bash
 # 备份 vaultwarden 项目（配置 + 数据）
 tar -czf /root/vaultwarden-backup.tar.gz /opt/docker/vaultwarden
-
-# 压缩包保存在 /root/vaultwarden-backup.tar.gz
 ```
+
+**压缩包位置**：`/root/vaultwarden-backup.tar.gz`
+
+---
 
 ### 备份所有项目
 
 ```bash
 # 一次性备份所有 Docker 项目
 tar -czf /root/docker-all-backup.tar.gz /opt/docker
-
-# 压缩包保存在 /root/docker-all-backup.tar.gz
 ```
+
+**压缩包位置**：`/root/docker-all-backup.tar.gz`
 
 ---
 
 ### 下载备份到本地电脑
 
-**方法一：scp 命令（本地电脑终端执行）**
+使用 [FileZilla](https://filezilla-project.org/) 或 [WinSCP](https://winscp.net/) 等 FTP 工具：
 
-```bash
-# 下载单个项目备份
-scp root@服务器IP:/root/vaultwarden-backup.tar.gz ~/Downloads/
-
-# 下载所有项目备份
-scp root@服务器IP:/root/docker-all-backup.tar.gz ~/Downloads/
-```
-
-**方法二：FTP 工具（推荐新手）**
-
-使用 [FileZilla](https://filezilla-project.org/) 或 [WinSCP](https://winscp.net/) 连接服务器，进入 `/root/` 目录，下载 `.tar.gz` 文件到本地。
+1. 连接到服务器（填写 IP、用户名 `root`、密码）
+2. 进入 `/root/` 目录
+3. 下载 `.tar.gz` 压缩包到本地电脑
 
 ---
 
 ### 恢复单个项目
 
 ```bash
-# 在新服务器上传压缩包后执行
+# 在新服务器上传压缩包到`/root/` 目录后执行
 tar -xzf /root/vaultwarden-backup.tar.gz -C /
 
 # 进入目录启动容器
@@ -246,12 +283,7 @@ curl -fsSL https://get.docker.com | sh
 
 **第 2 步：上传压缩包到新服务器**
 
-```bash
-# 本地电脑终端执行
-scp ~/Downloads/docker-all-backup.tar.gz root@新服务器IP:/root/
-```
-
-或使用 FTP 工具上传到新服务器的 `/root/` 目录。
+使用 FTP 工具将本地的 `docker-all-backup.tar.gz` 上传到新服务器的 `/root/` 目录。
 
 **第 3 步：解压并还原目录结构**
 
@@ -270,8 +302,9 @@ tar -xzf /root/docker-all-backup.tar.gz -C /
 ├── portainer/
 │   ├── compose.yaml
 │   └── portainer-data/
-└── compose-tool/
-    └── compose.yaml
+├── compose-tool/
+│   └── compose.yaml
+└── ...
 ```
 
 **第 4 步：一键启动所有容器**
@@ -283,7 +316,6 @@ for dir in /opt/docker/*/; do
 done
 ```
 
-
 ---
 
 ## 🔧 高级配置
@@ -291,22 +323,29 @@ done
 ### 修改默认卷映射路径
 
 编辑服务器上的 `compose.yaml`，修改 `VOLUME_PREFIX` 环境变量：
+
 ```yaml
 - VOLUME_PREFIX=/你的新路径/{container_name}
 ```
 
 重启容器：
+
 ```bash
+cd /opt/docker/compose-tool
 docker compose up -d --force-recreate
 ```
 
 ### 自定义端口
+
+编辑 `compose.yaml`：
+
 ```yaml
 ports:
   - "你的端口:80"
 ```
 
 ### 更新到最新版本
+
 ```bash
 cd /opt/docker/compose-tool
 docker compose pull
@@ -317,32 +356,17 @@ docker compose up -d
 
 ## 🛡️ 系统路径白名单
 
+以下路径自动识别保留，不做转换：
+
 | 分类 | 路径示例 |
 |---|---|
 | **Docker** | `/var/run/docker.sock`、`/var/lib/docker`、`/usr/bin/docker` |
 | **内核/设备** | `/proc`、`/sys`、`/dev`、`/boot`、`/lib/modules` |
-| **系统配置** | `/etc/localtime`、`/etc/hosts`、`/etc/resolv.conf` |
+| **系统配置** | `/etc/localtime`、`/etc/hosts`、`/etc/resolv.conf`、`/etc/timezone` |
 | **SSL 证书** | `/etc/ssl`、`/etc/pki`、`/etc/ca-certificates` |
+| **用户/组** | `/etc/passwd`、`/etc/group`、`/etc/shadow`、`/etc/gshadow` |
 
 完整白名单包含 45+ 路径，覆盖所有常见系统级挂载。
-
----
-
-## 📋 支持的 Docker Run 参数
-
-| 参数 | 支持 | 说明 |
-|---|:---:|---|
-| `--name` | ✅ | 容器名称 |
-| `-p / --publish` | ✅ | 端口映射 |
-| `-v / --volume` | ✅ | 卷映射（核心功能） |
-| `-e / --env` | ✅ | 环境变量 |
-| `--restart` | ✅ | 重启策略 |
-| `--hostname` | ✅ | 主机名 |
-| `--network` | ✅ | 网络配置 |
-| `--privileged` | ✅ | 特权模式 |
-| `-l / --label` | ✅ | 标签 |
-| `--log-driver` | ✅ | 日志驱动 |
-| `--workdir` | ✅ | 工作目录 |
 
 ---
 
