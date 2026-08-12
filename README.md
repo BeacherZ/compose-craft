@@ -20,7 +20,7 @@
 /root/data/          ← 有些项目装这里
 /home/user/docker/   ← 有些装这里
 /var/lib/myapp/      ← 有些装这里
-/tmp/test/           ← 还有些随手放的
+/tmp/test/← 还有些随手放的
 ```
 
 ### 解决方案
@@ -28,7 +28,7 @@
 本工具的目标是把所有 Docker 项目的"图纸"（compose.yaml 配置文件）和"材料"（映射的数据目录）统一存放在一起：
 
 ```
-/opt/docker/                        ← 统一大目录
+/opt/docker/                ← 统一大目录
 ├── vaultwarden/                    ← 每个容器一个子目录
 │   ├── compose.yaml                ← 图纸（配置文件）
 │   └── vw-data/                    ← 材料（容器数据）
@@ -61,6 +61,7 @@
 | 🛡️ **系统路径白名单** | 45+ 系统级挂载（如 `/var/run/docker.sock`）自动识别保留 |
 | 💾 **永久保存设置** | 首次访问配置路径后永久记住，无需重复设置 |
 | 🔄 **双模式支持** | 同时支持 Docker Run 命令和 Docker Compose YAML 配置转换 |
+| 📦 **一键部署命令** | 转换结果自动包含完整部署命令，复制粘贴即可执行 |
 | 📱 **响应式设计** | 完美适配桌面端和移动端 |
 
 ---
@@ -79,7 +80,7 @@ docker run -d \
 
 访问：`http://服务器IP:8765`
 
-> 💡 本工具是纯静态网页，无数据持久化需求，无需挂载卷。
+>💡 本工具是纯静态网页，无数据持久化需求，无需挂载卷。
 
 ---
 
@@ -112,7 +113,7 @@ docker compose up -d
 **常用管理命令**
 
 ```bash
-cd /opt/docker/compose-tool      # 进入项目目录
+cd /opt/docker/compose-tool# 进入项目目录
 docker compose logs -f            # 查看运行日志
 docker compose pull               # 拉取最新镜像
 docker compose up -d              # 重新部署（更新后执行）
@@ -133,26 +134,37 @@ docker compose down               # 停止并删除容器
 
 `{container_name}` 会自动替换为实际容器名，保存后永久生效，下次访问无需重新配置。
 
-**第 2 步：粘贴 Docker Run 命令或 Compose 配置**
+**第 2 步：粘贴 Docker Run 命令或Compose 配置**
 
 直接从官方文档或 GitHub 复制命令粘贴进去即可。
 
 **第 3 步：点击"转换配置"**
 
 工具自动完成：
-- 清理所有 Shell 变量（`$(pwd)`、`$HOME`、`~/` 等）
+
+-清理所有 Shell 变量（`$(pwd)`、`$HOME`、`~/` 等）
 - 路径转换为统一绝对路径
 - 保留系统级挂载不修改
 - 添加标准配置（端口引号、重启策略等）
 
-**第 4 步：复制并部署**
+**第 4 步：一键复制执行**
+
+点击右侧"复制"按钮，整段粘贴到终端执行即可，无需手动创建目录或文件：
 
 ```bash
-mkdir -p /opt/docker/容器名 && cd /opt/docker/容器名 && \
-vim compose.yaml && docker compose up -d
+# 转换结果上半部分是完整部署命令，示例：
+mkdir -p /opt/docker/vaultwarden && cd /opt/docker/vaultwarden && \
+cat > compose.yaml << 'EOF'
+services:
+  vaultwarden:
+    ...
+EOF
+docker compose up -d
 ```
 
-> 💡 执行 `vim compose.yaml` 后，按 `i` 进入编辑模式，粘贴转换结果，按 `Esc` 退出编辑模式，输入 `:wq` 保存并退出。
+>💡 转换结果分两部分：  
+> **上半部分**：完整一键部署命令，直接复制到终端执行  
+> **下半部分**：纯 compose.yaml 内容，如需手动编辑可复制此部分
 
 ---
 
@@ -170,9 +182,12 @@ docker run -d --name vaultwarden \
   vaultwarden/server:latest
 ```
 
-**输出**
+**转换结果（直接复制到终端执行）**
 
-```yaml
+```bash
+# 一键部署命令（复制下面整段到终端执行）
+mkdir -p /opt/docker/vaultwarden && cd /opt/docker/vaultwarden && \
+cat > compose.yaml << 'EOF'
 services:
   vaultwarden:
     image: vaultwarden/server:latest
@@ -184,11 +199,13 @@ services:
     environment:
       - "DOMAIN=https://vw.example.com"
     restart: unless-stopped
+EOF
+docker compose up -d
 ```
 
 ---
 
-### 示例 2：官方 Compose → 标准化路径
+### 示例 2：官方 Compose →标准化路径
 
 **输入**
 
@@ -204,16 +221,20 @@ services:
 
 **输出**
 
-```yaml
+```bash
+# 一键部署命令（复制下面整段到终端执行）
+mkdir -p /opt/docker/vaultwarden && cd /opt/docker/vaultwarden && \
+cat > compose.yaml << 'EOF'
 services:
   vaultwarden:
     image: vaultwarden/server:latest
-    container_name: vaultwarden
-    ports:
-      - "8000:80"
     volumes:
       - "/opt/docker/vaultwarden/vw-data:/data"
+    ports:
+      - "8000:80"
     restart: unless-stopped
+EOF
+docker compose up -d
 ```
 
 ---
@@ -232,7 +253,10 @@ docker run -d \
 
 **输出**
 
-```yaml
+```bash
+# 一键部署命令（复制下面整段到终端执行）
+mkdir -p /opt/docker/portainer && cd /opt/docker/portainer && \
+cat > compose.yaml << 'EOF'
 services:
   portainer:
     image: portainer/portainer-ce
@@ -241,7 +265,11 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/opt/docker/portainer/portainer-data:/data"
     restart: unless-stopped
+EOF
+docker compose up -d
 ```
+
+> `/var/run/docker.sock` 识别为系统路径，自动保留不转换。
 
 ---
 
@@ -255,13 +283,13 @@ services:
 
 ### 备份单个项目
 
-以下命令将 `vaultwarden` 项目打包为压缩包，保存在当前用户的家目录（`/root/`）：
+以下命令将`vaultwarden` 项目打包为压缩包，保存在 `/root/` 目录：
 
 ```bash
 tar -czf /root/vaultwarden-backup.tar.gz /opt/docker/vaultwarden
 ```
 
-**执行后压缩包位置**：`/root/vaultwarden-backup.tar.gz`
+**压缩包位置**：`/root/vaultwarden-backup.tar.gz`
 
 ---
 
@@ -271,29 +299,28 @@ tar -czf /root/vaultwarden-backup.tar.gz /opt/docker/vaultwarden
 tar -czf /root/docker-all-backup.tar.gz /opt/docker
 ```
 
-**执行后压缩包位置**：`/root/docker-all-backup.tar.gz`
+**压缩包位置**：`/root/docker-all-backup.tar.gz`
 
 ---
 
 ### 下载压缩包到本地电脑
 
-**方法一：使用 scp 命令（在本地电脑终端执行）**
+**方法一：scp 命令（在本地电脑终端执行）**
 
 ```bash
-# 下载单个项目备份
+# 下载单个项目备份到本地电脑的下载目录
 scp root@你的服务器IP:/root/vaultwarden-backup.tar.gz ~/Downloads/
 
 # 下载全部项目备份
 scp root@你的服务器IP:/root/docker-all-backup.tar.gz ~/Downloads/
 ```
 
-**方法二：使用 FTP 工具（推荐新手）**
+**方法二：FTP 工具（推荐新手）**
 
 1. 下载 [FileZilla](https://filezilla-project.org/) 或 [WinSCP](https://winscp.net/)
-2. 连接到服务器（填写 IP、用户名 root、密码）
-3. 进入右侧 `/root/` 目录
-4. 找到 `.tar.gz` 压缩包
-5. 右键 → 下载到本地电脑
+2. 连接到服务器（填写服务器 IP、用户名 `root`、密码）
+3. 右侧窗口进入 `/root/` 目录
+4. 找到 `.tar.gz` 文件，右键下载到本地电脑左侧窗口
 
 ---
 
@@ -307,32 +334,31 @@ curl -fsSL https://get.docker.com | sh
 
 **第 2 步：上传压缩包到新服务器**
 
-**方法一：使用 scp 命令（在本地电脑终端执行）**
+**方法一：scp 命令（在本地电脑终端执行）**
 
 ```bash
-# 从本地电脑上传到新服务器的 /root/ 目录
+# 将本地电脑的压缩包上传到新服务器的 /root/ 目录
 scp ~/Downloads/docker-all-backup.tar.gz root@新服务器IP:/root/
 ```
 
-**方法二：使用 FTP 工具**
+**方法二：FTP 工具**
 
-1. 用 FileZilla 或 WinSCP 连接新服务器
-2. 将本地电脑的压缩包拖拽到新服务器的 `/root/` 目录
+用 FileZilla 或 WinSCP 连接新服务器，将本地电脑的压缩包拖拽上传到新服务器的 `/root/` 目录。
 
-**第 3 步：在新服务器上解压**
+**第 3 步：在新服务器解压**
 
 ```bash
-# 解压到根目录，会自动还原 /opt/docker/ 目录结构
+# 解压到根目录，自动还原 /opt/docker/ 完整目录结构
 tar -xzf /root/docker-all-backup.tar.gz -C /
 ```
 
-**解压后自动恢复目录结构**：
+解压后目录结构自动恢复：
 
 ```
 /opt/docker/
 ├── vaultwarden/
-│   ├── compose.yaml
-│   └── vw-data/
+│   ├── compose.yaml    ← 配置文件已还原
+│   └── vw-data/        ← 数据已还原
 ├── portainer/
 │   ├── compose.yaml
 │   └── portainer-data/
@@ -350,30 +376,14 @@ for dir in /opt/docker/*/; do
 done
 ```
 
-**执行后会看到类似输出**：
-
-```
-正在启动: /opt/docker/vaultwarden/
-[+] Running 1/1
- ✔ Container vaultwarden  Started
-
-正在启动: /opt/docker/portainer/
-[+] Running 1/1
- ✔ Container portainer  Started
-
-正在启动: /opt/docker/compose-tool/
-[+] Running 1/1
- ✔ Container compose-tool  Started
-```
+执行后会看到所有容器依次启动。
 
 ---
 
 ### 单独恢复某个项目
 
-如果只需要恢复其中一个项目：
-
 ```bash
-# 解压到根目录（会还原到 /opt/docker/vaultwarden/）
+# 解压单个项目（自动还原到 /opt/docker/vaultwarden/）
 tar -xzf /root/vaultwarden-backup.tar.gz -C /
 
 # 进入目录启动
@@ -389,10 +399,10 @@ cd /opt/docker/vaultwarden && docker compose up -d
 | **Docker** | `/var/run/docker.sock`、`/var/lib/docker`、`/usr/bin/docker` |
 | **内核/设备** | `/proc`、`/sys`、`/dev`、`/boot`、`/lib/modules` |
 | **系统配置** | `/etc/localtime`、`/etc/hosts`、`/etc/resolv.conf`、`/etc/timezone` |
-| **SSL 证书** | `/etc/ssl`、`/etc/pki`、`/etc/ca-certificates` |
+| **SSL证书** | `/etc/ssl`、`/etc/pki`、`/etc/ca-certificates` |
 | **用户/组** | `/etc/passwd`、`/etc/group`、`/etc/shadow`、`/etc/gshadow` |
 
-完整白名单包含 45+ 路径，覆盖所有常见系统级挂载。
+完整白名单包含45+ 路径，覆盖所有常见系统级挂载。
 
 ---
 
@@ -433,7 +443,7 @@ ports:
 
 ### 修改默认路径
 
-首次访问后可随时点击右上角 ⚙️ **设置** 按钮修改，设置保存在浏览器本地。
+首次访问后可随时点击右上角 ⚙️ **设置** 按钮修改，设置保存在浏览器本地（localStorage）。
 
 ### 更新到最新版本
 
