@@ -4,9 +4,9 @@
 
 一键转换 Docker Run 命令和 Docker Compose 配置，实现"一容器一目录"的标准化管理。
 
-![License](https://img.shields.io/github/license/BeacherZ/compose-craft?style=flat-square)
+![License](https://img.shields.io/github/license/BeacherZ/compose-tool?style=flat-square)
 ![Docker](https://img.shields.io/badge/docker-ready-blue?style=flat-square&logo=docker)
-![GitHub Stars](https://img.shields.io/github/stars/BeacherZ/compose-craft?style=flat-square)
+![GitHub Stars](https://img.shields.io/github/stars/BeacherZ/compose-tool?style=flat-square)
 
 ---
 
@@ -35,7 +35,7 @@
 ├── portainer/
 │   ├── compose.yaml
 │   └── portainer-data/
-├── compose-craft/                  ← 本项目自身也遵循此规范
+├── compose-tool/                  ← 本项目自身也遵循此规范
 │   └── compose.yaml                ← 本项目无数据卷，只有配置文件
 └── nextcloud/
     ├── compose.yaml
@@ -71,10 +71,10 @@
 
 ```bash
 docker run -d \
-  --name compose-craft \
+  --name compose-tool \
   --restart unless-stopped \
   -p 8765:80 \
-  ghcr.io/beacherz/compose-craft:latest
+  ghcr.io/beacherz/compose-tool:latest
 ```
 
 访问：`http://服务器IP:8765`
@@ -88,8 +88,8 @@ docker run -d \
 **第1 步：创建项目目录**
 
 ```bash
-mkdir -p /opt/docker/compose-craft
-cd /opt/docker/compose-craft
+mkdir -p /opt/docker/compose-tool
+cd /opt/docker/compose-tool
 ```
 
 **第 2 步：创建 compose.yaml**
@@ -97,9 +97,9 @@ cd /opt/docker/compose-craft
 ```bash
 cat > compose.yaml << 'EOF'
 services:
-  compose-craft:
-    image: ghcr.io/beacherz/compose-craft:latest
-    container_name: compose-craft
+  compose-tool:
+    image: ghcr.io/beacherz/compose-tool:latest
+    container_name: compose-tool
     restart: unless-stopped
     ports:
       - "8765:80"
@@ -419,7 +419,7 @@ docker compose up -d
 
 ```bash
 # Docker Run 方式
-docker run -d -p 你的端口:80 ghcr.io/beacherz/compose-craft:latest
+docker run -d -p 你的端口:80 ghcr.io/beacherz/compose-tool:latest
 
 # Docker Compose 方式：编辑 compose.yaml 修改 ports 部分
 ports:
@@ -433,7 +433,7 @@ ports:
 ### 更新到最新版本
 
 ```bash
-cd /opt/docker/compose-craft
+cd /opt/docker/compose-tool
 docker compose pull
 docker compose up -d
 ```
@@ -450,14 +450,14 @@ docker compose up -d
 
 如果这个项目帮助到了你，请点个 **Star ⭐️** 支持作者持续优化！
 
-[![Star History Chart](https://api.star-history.com/svg?repos=BeacherZ/compose-craft&type=Date)](https://star-history.com/#BeacherZ/compose-craft&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=BeacherZ/compose-tool&type=Date)](https://star-history.com/#BeacherZ/compose-tool&Date)
 
 ---
 
 ## 📧 问题反馈
 
-- **Issues**：[提交问题](https://github.com/BeacherZ/compose-craft/issues)
-- **Discussions**：[参与讨论](https://github.com/BeacherZ/compose-craft/discussions)
+- **Issues**：[提交问题](https://github.com/BeacherZ/compose-tool/issues)
+- **Discussions**：[参与讨论](https://github.com/BeacherZ/compose-tool/discussions)
 
 ---
 
