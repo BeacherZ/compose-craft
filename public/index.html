@@ -90,7 +90,7 @@
         </div>
         <div class="input-group">
             <label for="volumePrefix">自定义卷映射绝对路径</label>
-            <input type="text" id="volumePrefix" value="/opt/docker/{container_name}">
+            <input type="text" id="volumePrefix" value="__VOLUME_PREFIX__">
             <div class="hint">· 留空则不做任何替换<br>· <code>$(pwd)</code> 等 shell 变量会被自动去掉<br>· <code>{container_name}</code> 会自动替换为实际容器名<br>· 系统级挂载如 <code>/var/run/docker.sock</code> 等不会被替换<br>· 默认值由服务端 <code>VOLUME_PREFIX</code> 环境变量决定</div>
         </div>
         <div class="input-group">
@@ -307,15 +307,29 @@
             var inServiceVolumes = false;
             var serviceIndent = -1;
             var containerName = '';
+            var serviceName = '';
             var hasRestart = false;
             var hasPrivileged = false;
+            
             for (var i = 0; i < lines.length; i++) {
                 var m = lines[i].match(/^\s*container_name:\s*(.+)/);
                 if (m) containerName = m[1].trim();
                 if (lines[i].match(/^\s*restart:\s*/)) hasRestart = true;
                 if (lines[i].match(/^\s*privileged:\s*/)) hasPrivileged = true;
+                
+                // 提取服务名（services: 下面第一个缩进的 key）
+                if (!serviceName && i > 0) {
+                    if (lines[i-1].match(/^services:\s*$/)) {
+                        var sn = lines[i].match(/^  ([a-zA-Z0-9_-]+):\s*$/);
+                        if (sn) serviceName = sn[1];
+                    }
+                }
             }
-            var finalPrefix = rp ? rp.replace(/\{container_name\}/g, containerName) : '';
+            
+            // 优先用 container_name，其次用服务名，最后 fallback
+            var effectiveName = containerName || serviceName || 'my-service';
+            var finalPrefix = rp ? rp.replace(/\{container_name\}/g, effectiveName) : '';
+            
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i];
                 var lineIndent = line.match(/^(\s*)/)[1].length;
@@ -344,7 +358,7 @@
             if (!hasRestart && cbRestart.checked) { result.splice(insertIdx, 0, indent + 'restart: unless-stopped'); insertIdx++; }
             if (!hasPrivileged && cbPrivileged.checked) { result.splice(insertIdx, 0, indent + 'privileged: true'); }
             var yaml = result.join('\n');
-            var deployContainerName = containerName || 'my-service';
+            var deployContainerName = effectiveName;
             var deployCommand =
 "mkdir -p /opt/docker/" + deployContainerName + " && cd /opt/docker/" + deployContainerName + " && \\\n" +
 "cat > compose.yaml << 'EOF'\n" + yaml + "\nEOF\n" +
