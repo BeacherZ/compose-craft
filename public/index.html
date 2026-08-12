@@ -200,13 +200,11 @@
         var saveSettings = document.getElementById('saveSettings');
         var resetDefault = document.getElementById('resetDefault');
 
-        // 复制按钮 - 部署命令
         var copyDeployBtn = document.getElementById('copyDeployBtn');
         var copyDeployLabel = document.getElementById('copyDeployLabel');
         var copyDeployIcon = document.getElementById('copyDeployIcon');
         var checkDeployIcon = document.getElementById('checkDeployIcon');
 
-        // 复制按钮 - YAML
         var copyYamlBtn = document.getElementById('copyYamlBtn');
         var copyYamlLabel = document.getElementById('copyYamlLabel');
         var copyYamlIcon = document.getElementById('copyYamlIcon');
@@ -261,40 +259,60 @@
             }
         });
 
-        // 复制按钮 - 部署命令
+        function copyText(text, btn, labelEl, copyIconEl, checkIconEl) {
+            if (!text) return;
+            
+            function onSuccess() {
+                btn.classList.add('copied');
+                copyIconEl.style.display = 'none';
+                checkIconEl.style.display = '';
+                labelEl.textContent = '已复制';
+                setTimeout(function () {
+                    btn.classList.remove('copied');
+                    copyIconEl.style.display = '';
+                    checkIconEl.style.display = 'none';
+                    labelEl.textContent = '复制';
+                }, 2000);
+            }
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(onSuccess).catch(function () {
+                    fallbackCopy(text, onSuccess);
+                });
+            } else {
+                fallbackCopy(text, onSuccess);
+            }
+        }
+
+        function fallbackCopy(text, onSuccess) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '-9999px';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {
+                var ok = document.execCommand('copy');
+                if (ok) onSuccess();
+                else alert('复制失败，请手动选中内容复制');
+            } catch (e) {
+                alert('复制失败，请手动选中内容复制');
+            }
+            document.body.removeChild(ta);
+        }
+
         copyDeployBtn.addEventListener('click', function () {
             var text = deployOutput.textContent;
             if (!text || text === '粘贴到终端执行，自动完成目录创建、文件生成、容器启动') return;
-            navigator.clipboard.writeText(text).then(function () {
-                copyDeployBtn.classList.add('copied');
-                copyDeployIcon.style.display = 'none';
-                checkDeployIcon.style.display = '';
-                copyDeployLabel.textContent = '已复制';
-                setTimeout(function () {
-                    copyDeployBtn.classList.remove('copied');
-                    copyDeployIcon.style.display = '';
-                    checkDeployIcon.style.display = 'none';
-                    copyDeployLabel.textContent = '复制';
-                }, 2000);
-            }).catch(function () { alert('复制失败，请手动选中内容复制'); });
+            copyText(text, copyDeployBtn, copyDeployLabel, copyDeployIcon, checkDeployIcon);
         });
 
-        // 复制按钮 - YAML
         copyYamlBtn.addEventListener('click', function () {
             var text = yamlOutput.textContent;
             if (!text || text === '纯 compose.yaml 配置内容，适合手动编辑或集成到其他工具') return;
-            navigator.clipboard.writeText(text).then(function () {
-                copyYamlBtn.classList.add('copied');
-                copyYamlIcon.style.display = 'none';
-                checkYamlIcon.style.display = '';
-                copyYamlLabel.textContent = '已复制';
-                setTimeout(function () {
-                    copyYamlBtn.classList.remove('copied');
-                    copyYamlIcon.style.display = '';
-                    checkYamlIcon.style.display = 'none';
-                    copyYamlLabel.textContent = '复制';
-                }, 2000);
-            }).catch(function () { alert('复制失败，请手动选中内容复制'); });
+            copyText(text, copyYamlBtn, copyYamlLabel, copyYamlIcon, checkYamlIcon);
         });
 
         convertBtn.addEventListener('click', convertCommand);
