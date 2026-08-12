@@ -107,7 +107,9 @@ docker compose up -d
 访问：`http://服务器IP:6688`
 
 > **关于 HTTPS**：本工具为纯前端静态页面，所有数据在浏览器本地处理，HTTP 访问完全安全。
+> 
 > 如需HTTPS，可在前面套一层反向代理（如 Nginx Proxy Manager / Caddy / Traefik），
+> 
 > 将域名指向 `服务器IP:6688` 即可。
 
 **常用管理命令**
