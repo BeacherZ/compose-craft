@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: star-history/star-history-action@v1.1.0
+      - uses: star-history/action@v1.1.0
         with:
           repos: 'BeacherZ/compose-tool'
           token: ${{ secrets.GITHUB_TOKEN }}
