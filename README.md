@@ -14,7 +14,7 @@
 
 ![主界面](https://raw.githubusercontent.com/BeacherZ/compose-tool/main/main.png)
 
-🔗 **在线演示**：[Compose Tool | Docker 配置转换工具](http://8.209.214.239:6688)
+🔗 **在线演示**：<a href="http://8.209.214.239:6688" target="_blank">Compose Tool | Docker 配置转换工具</a>
 
 ---
 
