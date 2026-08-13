@@ -384,7 +384,7 @@ docker compose up -d
 
 ## 📈 Star History
 
-![Star History Chart](./star-history.svg)
+![Star History](.github/star-history/chart.svg)
 
 ---
 
