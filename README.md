@@ -378,12 +378,6 @@ docker compose up -d
 
 ---
 
-## 📈 Star History
-
-![Star History](.github/star-history/chart.svg)
-
----
-
 ## 📧 问题反馈
 
 - **Issues**：[提交问题](https://github.com/BeacherZ/compose-tool/issues)
