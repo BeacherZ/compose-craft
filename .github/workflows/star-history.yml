@@ -16,6 +16,7 @@ jobs:
       - uses: nicoloboschi/gh-stars@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          min-stars: '1' # 强制从 1 个 Star 开始就生成图表
 
       - name: Commit & Push Chart
         run: |
