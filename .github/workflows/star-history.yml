@@ -2,21 +2,23 @@ name: Generate Star History
 on:
   schedule:
     - cron: '0 0 * * *' # 每天自动更新一次
-  workflow_dispatch: # 支持手动触发
+  workflow_dispatch: # 支持在 Actions 页面手动触发
+
+permissions:
+  contents: write # 赋予写入仓库内容的权限
 
 jobs:
   star-history:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: narayann7/star-history-action@v1.0.4
+
+      - uses: star-history/star-history-action@v1.1.0
         with:
-          secret_token: ${{ secrets.GITHUB_TOKEN }}
-          image_path: 'star-history.svg'
-      - name: Commit & Push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add star-history.svg
-          git commit -m "chore: update star history chart [skip ci]" || exit 0
-          git push
+          repos: 'BeacherZ/compose-tool'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          type: 'Date'
+          output-dir: '.'
+          update-readme: true
+          commit: true
+          commit-message: 'chore: update star history chart [skip ci]'
