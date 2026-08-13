@@ -382,11 +382,11 @@ docker compose up -d
 
 ---
 
-## 🌟 Star History
+## 🌟 支持项目
 
 如果这个项目帮助到了你，请点个 **Star ⭐️** 支持作者持续优化！
 
-[![Star History Chart](https://api.star-history.com/svg?repos=BeacherZ/compose-tool&type=Date)](https://star-history.com/#BeacherZ/compose-tool&Date)
+![GitHub Stars](https://img.shields.io/github/stars/BeacherZ/compose-tool?style=for-the-badge&logo=github)
 
 ---
 
