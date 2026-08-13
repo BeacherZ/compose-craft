@@ -5,20 +5,22 @@ on:
   workflow_dispatch: # 支持在 Actions 页面手动触发
 
 permissions:
-  contents: write # 赋予写入仓库内容的权限
+  contents: write # 赋予 Actions 提交写权限
 
 jobs:
-  star-history:
+  update-star-history:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: star-history/action@v1.1.0
+      - uses: nicoloboschi/gh-stars@v1
         with:
-          repos: 'BeacherZ/compose-tool'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          type: 'Date'
-          output-dir: '.'
-          update-readme: true
-          commit: true
-          commit-message: 'chore: update star history chart [skip ci]'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit & Push Chart
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/star-history/data.json .github/star-history/chart.svg
+          git diff --cached --quiet || git commit -m 'chore: update star history chart'
+          git push
