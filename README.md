@@ -82,7 +82,8 @@ docker run -d \
 ```
 
 ### 方式二：Docker Compose（推荐，符合本工具理念）
-> 如不想使用本项目默认的`/opt/docker/{container_name}`，请直接修改 VOLUME_PREFIX 环境变量进行初始化指定
+> 💡 自定义路径说明：
+> 如果不想使用默认的 /opt/docker/ 路径，请在执行前将下面命令中所有的 /opt/docker/ 整体替换为你规划的路径（包括 mkdir、cd 以及环境变量中的路径）。
 ```bash
 mkdir -p /opt/docker/compose-tool && cd /opt/docker/compose-tool && \
 cat > compose.yaml << 'EOF'
