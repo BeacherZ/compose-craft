@@ -70,7 +70,7 @@
 
 ## 🚀 快速部署
 
-### 方式一：Docker Run （不推荐）
+### 方式一：Docker Run（不推荐）
 
 ```bash
 docker run -d \
